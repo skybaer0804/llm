@@ -1,0 +1,66 @@
+# 03. Ollama 설치 및 웹 UI 구성
+
+Ollama를 통해 로컬 LLM 엔진을 구축하고, 편리한 인터페이스를 위한 OpenWebUI를 설정합니다.
+
+## 1. Ollama 설치 및 실행
+
+### Homebrew를 이용한 설치
+```bash
+# Homebrew 미설치 시 먼저 설치
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Ollama 설치
+brew install ollama
+
+# 백그라운드 서비스 시작 (재부팅 시 자동 실행)
+brew services start ollama
+```
+
+### 설치 확인
+```bash
+ollama --version
+curl http://localhost:11434
+```
+
+## 2. Qwen3 기반 모델 다운로드
+
+Mac M4 Pro 64GB 환경에 최적화된 Qwen3 모델 시리즈를 내려받습니다.
+
+```bash
+# Architect: Qwen3 Coder Next (고성능 설계용)
+ollama pull qwen3-coder-next:q4_K_M
+
+# Coder: Qwen3 Coder 32B (고속 코드 생성용)
+ollama pull qwen3-coder:32b
+
+# Reviewer: Qwen3 Coder 14B (빠른 검증용)
+ollama pull qwen3-coder:14b
+```
+
+## 3. OpenWebUI 구성 (Docker)
+
+브라우저에서 대화형으로 모델을 테스트할 수 있는 인터페이스를 실행합니다.
+
+```bash
+docker run -d \
+  -p 127.0.0.1:3000:8080 \
+  --add-host=host.docker.internal:host-gateway \
+  -v open-webui:/app/backend/data \
+  --name open-webui \
+  --restart always \
+  ghcr.io/open-webui/open-webui:main
+```
+
+### OpenWebUI 초기 설정
+1. 브라우저에서 `http://localhost:3000` 접속 후 관리자 계정 생성.
+2. **Settings** → **Connections** 이동.
+3. **Ollama API URL**에 `http://host.docker.internal:11434` 입력 후 저장.
+4. 이제 메인 화면의 모델 선택 창에서 다운로드한 Qwen3 모델들이 표시됩니다.
+
+## 4. 멀티모달(비전) 지원
+이미지 분석이 필요한 경우 비전 전용 모델을 추가로 설치할 수 있습니다.
+```bash
+# Qwen2-VL 또는 Llama 비전 모델 등
+ollama pull qwen2-vl:7b
+```
+OpenWebUI 대화창에 이미지를 업로드하여 분석 성능을 테스트해보세요.
