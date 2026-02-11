@@ -45,10 +45,12 @@
 - [개발 생산성 및 기대 효과](./docs/00_Intro/03_개발_생산성_및_기대_효과.md)
 
 ### [01. 환경 설정 (Setup)](./docs/01_Setup)
+- [macOS 시스템 최적화](./docs/01_Setup/00_macOS_시스템_최적화.md)
 - [Python 및 가상환경 설정](./docs/01_Setup/01_Python_및_가상환경_설정.md)
-- [Docker 및 보안 설정](./docs/02_Docker_및_보안_설정.md)
+- [Docker 및 보안 설정](./docs/01_Setup/02_Docker_및_보안_설정.md)
 - [Ollama 설치 및 웹 UI 구성](./docs/01_Setup/03_Ollama_설치_및_웹UI_구성.md)
 - [AutoGen 설치 및 환경 확인](./docs/01_Setup/04_AutoGen_설치_및_환경_확인.md)
+- [Claude Code CLI 설치 및 설정](./docs/01_Setup/05_Claude_Code_CLI_설치_및_설정.md)
 
 ### [02. 시스템 설계 (System Design)](./docs/02_System_Design)
 - [Qwen3 모델 구성 전략](./docs/02_System_Design/01_Qwen3_모델_구성_전략.md)
