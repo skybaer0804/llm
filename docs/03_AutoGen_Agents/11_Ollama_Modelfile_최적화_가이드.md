@@ -26,7 +26,7 @@ M4 Pro 64GB 환경에서 에이전시를 운영하신다면 아래와 같은 단
 
 ```dockerfile
 # 예: my-coder-32b 생성용 Modelfile
-FROM qwen3-coder:32b
+FROM qwen3-coder:30b
 
 # 코더용 낮은 창의성 및 컨텍스트 창 고정
 PARAMETER temperature 0.2

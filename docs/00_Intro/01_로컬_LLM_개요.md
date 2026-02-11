@@ -26,8 +26,8 @@
 
 - **🛰️ Router (Gateway)**: `qwen2.5:7b` - 시스템 관문으로서 요청 분석 및 에이전트 라우팅 수행.
 - **🧠 Planner (Architect)**: `qwen3-coder-next:q4_K_M` - 요구사항 분석 및 시스템 아키텍처 설계.
-- **💻 Dev1_Senior (Coder)**: `qwen3-coder:32b` - 핵심 기능 구현 및 TDD 기반 고속 코드 생성.
-- **👀 Dev2_Reviewer / Tester**: `qwen3-coder:14b` - 코드 품질 검수 및 pytest 기반 자동화 테스트 수행.
+- **💻 Dev1_Senior (Coder)**: `qwen3-coder:30b` - 핵심 기능 구현 및 TDD 기반 고속 코드 생성.
+- **👀 Dev2_Reviewer / Tester**: `qwen3:14b` - 코드 품질 검수 및 pytest 기반 자동화 테스트 수행.
 - **📝 Documenter**: `qwen2.5:7b` - 협업 기록을 취합한 기술 문서 및 최종 리포트 작성.
 - **🚀 Frontier LLM**: (외부) GPT-4o / Claude - 로컬 한계 초과 시 활용하는 SOS 파트너.
 

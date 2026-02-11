@@ -35,11 +35,11 @@ ollama pull qwen2.5:7b
 # Architect: Qwen3 Coder Next (고성능 설계용)
 ollama pull qwen3-coder-next:q4_K_M
 
-# Coder: Qwen3 Coder 32B (고속 코드 생성용)
-ollama pull qwen3-coder:32b
+# Coder: Qwen3 Coder 30B (고속 코드 생성용)
+ollama pull qwen3-coder:30b
 
-# Reviewer: Qwen3 Coder 14B (빠른 검증용)
-ollama pull qwen3-coder:14b
+# Reviewer: Qwen3 14B (빠른 검증용)
+ollama pull qwen3:14b
 
 # Embedding: 다국어 지원 임베딩 모델 (RAG 속도 및 정확도 향상)
 ollama pull bge-m3

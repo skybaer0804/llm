@@ -20,15 +20,15 @@ AutoGen 시스템의 핵심인 지능형 LLM 라우터(`router.py`)의 구현 �
 | :--- | :--- | :--- | :--- | :--- |
 | **Orchestration / Doc** | `qwen2.5:7b` | 약 4.7GB | **상시 상주** | 작업 분류(라우팅), 보안 스캔, 최종 문서화, 간단한 요약 |
 | **Plan / Design** | `qwen3-coder-next:q4_K_M` | 약 52GB | **On-Demand** | 고수준 아키텍처 설계, 대규모 리팩토링 전략, 외부 프론티어 모델 연동 판단 |
-| **Code / Implement** | `qwen3-coder:32b` | 약 19GB | **루프 상주** | 신규 기능 구현, 로직 수정, API 개발 (TDD 사이클 내 상주) |
-| **Review / Test** | `qwen3-coder:14b` | 약 9GB | **루프 상주** | 유닛 테스트 생성, 보안 검수(Output Guardrail), 코드 리뷰 |
+| **Code / Implement** | `qwen3-coder:30b` | 약 18GB | **루프 상주** | 신규 기능 구현, 로직 수정, API 개발 (TDD 사이클 내 상주) |
+| **Review / Test** | `qwen3:14b` | 약 9GB | **루프 상주** | 유닛 테스트 생성, 보안 검수(Output Guardrail), 코드 리뷰 |
 
 ### 라우팅 판단 기준 (Decision Logic)
 1.  **보안 우선**: 모든 입력은 `qwen2.5:7b` (Router)를 거쳐 간접 프롬프트 주입(Indirect Prompt Injection) 여부를 최우선으로 검사합니다.
 2.  **난이도 기반**:
     *   **난이도 [상]**: 모듈 5개 이상의 의존성 재설계나 보안 아키텍처 설계가 필요한 경우 → **Architect** 호출 (메모리 스왑 발생).
     *   **난이도 [하]**: 단순 기능 구현, 단일 모듈 리팩토링, 버그 수정 → **Coder/Tester** 루프 내에서 처리.
-3.  **경제적 운영**: 32B 모델이 2번 이상 해결하지 못한 과제에 대해서만 '상'으로 격상하여 52B 모델을 소환합니다.
+3.  **경제적 운영**: 30B 모델이 2번 이상 해결하지 못한 과제에 대해서만 '상'으로 격상하여 52B 모델을 소환합니다.
 
 ## 3. 메모리 관리 로직 (Python pseudo-code)
 

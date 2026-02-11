@@ -35,7 +35,7 @@ AutoGen에서 로컬 Ollama 모델을 호출할 때 다음과 같은 설정(`con
 ```python
 config_list = [
     {
-        "model": "qwen3-coder:32b",
+        "model": "qwen3-coder:30b",
         "base_url": "http://localhost:11434/v1",
         "api_key": "ollama", # 로컬이므로 임의의 값 입력
     }
@@ -52,7 +52,7 @@ curl http://localhost:11434
 
 # 2. 필수 모델 존재 여부 확인
 ollama list
-# qwen3-coder-next:q4_K_M, qwen3-coder:32b, qwen3-coder:14b가 목록에 있어야 함
+# qwen3-coder-next:q4_K_M, qwen3-coder:30b, qwen3:14b가 목록에 있어야 함
 
 # 3. 모델 응답 테스트 (Architect 모델 예시)
 ollama run qwen3-coder-next:q4_K_M "현재 시스템 준비 상태를 점검해줘."

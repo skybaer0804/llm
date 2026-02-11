@@ -10,8 +10,8 @@ Mac M4 Pro 64GB 환경에서 최상의 성능과 효율을 내기 위한 Qwen3 �
 | :--- | :--- | :--- | :--- | :--- |
 | **🛰️ 게이트웨이** | `Router` | `qwen2.5:7b` | 상황 판단, 에이전트 라우팅, **보안 스캔(Input Guardrail)** | 약 5GB |
 | **🧠 설계자** | `Planner` | `qwen3-coder-next:q4_K_M` | 요구사항 분석, 아키텍처 설계, 256K 컨텍스트 | 약 52GB |
-| **💻 메인 개발** | `Dev1_Senior` | `qwen3-coder:32b` | 핵심 기능 구현, 리팩터링, 고성능 코딩 모델 | 약 19GB |
-| **👀 검수/테스트** | `Dev2/Tester` | `qwen3-coder:14b` | 코드 리뷰, pytest 실행, 페르소나 전환 활용 | 약 9GB |
+| **💻 메인 개발** | `Dev1_Senior` | `qwen3-coder:30b` | 핵심 기능 구현, 리팩터링, 고성능 코딩 모델 | 약 18GB |
+| **👀 검수/테스트** | `Dev2/Tester` | `qwen3:14b` | 코드 리뷰, pytest 실행, 페르소나 전환 활용 | 약 9GB |
 | **📝 문서화** | `Documenter` | `qwen2.5:7b` | 기술 문서 및 최종 리포트 작성 | 약 5GB |
 | **🚀 외부 협력** | `Frontier LLM` | `GPT-4o / Claude` | 로컬 한계 초과 시 고난도 작업 수행 (API) | - |
 
@@ -24,6 +24,6 @@ Mac M4 Pro 64GB 환경에서 최상의 성능과 효율을 내기 위한 Qwen3 �
 ## 3. 하드웨어 제약 사항 및 대응 (Mac M4 Pro 64GB)
 
 -   **초대형 모델 (`Planner`) 구동 시**: `qwen3-coder-next:q4_K_M`은 약 52GB를 점유하므로, 구동 시 Router를 제외한 **다른 상주 모델(Coder, Reviewer)을 일시적으로 언로드**하여 스왑 발생을 방지합니다.
--   **상주 루프 (`Dev` + `Reviewer`)**: 개발자(32b)와 검수자(14b) 모델은 합계 약 28GB로, Router(5GB)와 함께 메모리에 상주시켜 빠른 TDD 피드백 루프를 구성합니다.
+-   **상주 루프 (`Dev` + `Reviewer`)**: 개발자(30b)와 검수자(14b) 모델은 합계 약 27GB로, Router(5GB)와 함께 메모리에 상주시켜 빠른 TDD 피드백 루프를 구성합니다.
 -   **동적 페르소나 전환**: 메모리 절약을 위해 `Dev2_Reviewer`와 `Tester_QA`는 동일한 `14b` 인스턴스를 공유하며, 호출 시점에 System Prompt를 통해 역할을 전환합니다.
 -   **순차 실행 (Sequential Execution)**: 설계 단계 종료 후 메모리를 반납하고 구현 단계로 넘어가는 파이프라인 구조를 채택합니다.
