@@ -24,11 +24,14 @@ ollama --version
 curl http://localhost:11434
 ```
 
-## 2. Qwen3 기반 모델 다운로드
+## 2. 에이전트별 모델 다운로드
 
-Mac M4 Pro 64GB 환경에 최적화된 Qwen3 모델 시리즈를 내려받습니다.
+Mac M4 Pro 64GB 환경에 최적화된 모델 시리즈를 내려받습니다.
 
 ```bash
+# Router/Documenter: Qwen 2.5 7B (중계 및 문서화용 - 상주 모델)
+ollama pull qwen2.5:7b
+
 # Architect: Qwen3 Coder Next (고성능 설계용)
 ollama pull qwen3-coder-next:q4_K_M
 
@@ -39,7 +42,7 @@ ollama pull qwen3-coder:32b
 ollama pull qwen3-coder:14b
 
 # Embedding: 다국어 지원 임베딩 모델 (RAG 속도 및 정확도 향상)
-ollama pull multi-qa-mpnet-base-dot-v1
+ollama pull bge-m3
 ```
 
 ## 3. OpenWebUI 구성 (Docker)
@@ -66,7 +69,7 @@ docker run -d \
 2. **Settings** → **Connections** 이동.
 3. **Ollama API URL**에 `http://host.docker.internal:11434` 입력 후 저장.
 4. **Settings** → **General** (또는 Documents/Embedding) 이동.
-5. **Embedding Model** 설정을 `multi-qa-mpnet-base-dot-v1`로 지정.
+5. **Embedding Model** 설정을 `bge-m3`로 지정.
    * 이렇게 설정하면 RAG를 위해 문서를 업로드할 때 처리 속도와 검색 정확도가 비약적으로 향상됩니다.
 6. 이제 메인 화면의 모델 선택 창에서 다운로드한 Qwen3 모델들이 표시됩니다.
 
