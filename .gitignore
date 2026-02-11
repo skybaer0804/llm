@@ -1,0 +1,19 @@
+# 가상 환경
+.venv/
+venv/
+ENV/
+
+# 파이썬 캐시 및 컴파일 파일
+__pycache__/
+*.py[cod]
+*.class
+
+# 운영체제 관련 파일
+.DS_Store
+Thumbs.db
+
+# 로그 및 로컬 설정
+*.log
+.env
+.vscode/
+.idea/
