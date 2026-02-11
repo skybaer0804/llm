@@ -1,7 +1,9 @@
 """
-에이전트별 LLM 설정 및 프로젝트 상수
+LLM 설정 및 프로젝트 상수
 
-Ollama OpenAI-compatible API (http://localhost:11434/v1) 사용
+단일 모델 아키텍처:
+- 작업 모델: qwen3-coder-next:q4_K_M (52GB) - 모든 에이전트 공유
+- 게이트웨이: qwen2.5:7b (4.7GB) - 라우터 분석 전용
 """
 
 import os
@@ -24,39 +26,15 @@ OLLAMA_API_V1 = f"{OLLAMA_BASE_URL}/v1"
 OLLAMA_API_KEY = "ollama"  # 로컬이므로 임의값
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# 에이전트별 LLM config_list
+# LLM 모델 설정 (단일 모델 아키텍처)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-ARCHITECT_CONFIG = {
+# 작업 모델 - 모든 에이전트가 공유 (52GB)
+MAIN_MODEL = "qwen3-coder-next:q4_K_M"
+MAIN_LLM_CONFIG = {
     "config_list": [
         {
-            "model": "qwen3-coder-next:q4_K_M",
-            "base_url": OLLAMA_API_V1,
-            "api_key": OLLAMA_API_KEY,
-            "api_type": "openai",
-        }
-    ],
-    "temperature": 0.3,
-    "cache_seed": None,  # 캐시 비활성화 (매번 새로운 응답)
-}
-
-CODER_CONFIG = {
-    "config_list": [
-        {
-            "model": "qwen3-coder:30b",
-            "base_url": OLLAMA_API_V1,
-            "api_key": OLLAMA_API_KEY,
-            "api_type": "openai",
-        }
-    ],
-    "temperature": 0.2,
-    "cache_seed": None,
-}
-
-REVIEWER_CONFIG = {
-    "config_list": [
-        {
-            "model": "qwen3:14b",
+            "model": MAIN_MODEL,
             "base_url": OLLAMA_API_V1,
             "api_key": OLLAMA_API_KEY,
             "api_type": "openai",
@@ -66,23 +44,12 @@ REVIEWER_CONFIG = {
     "cache_seed": None,
 }
 
-TESTER_CONFIG = {
+# 게이트웨이 모델 - 라우터 분석 전용 (4.7GB, 상시 상주)
+GATEWAY_MODEL = "qwen2.5:7b"
+GATEWAY_LLM_CONFIG = {
     "config_list": [
         {
-            "model": "qwen3:14b",
-            "base_url": OLLAMA_API_V1,
-            "api_key": OLLAMA_API_KEY,
-            "api_type": "openai",
-        }
-    ],
-    "temperature": 0.2,
-    "cache_seed": None,
-}
-
-ROUTER_CONFIG = {
-    "config_list": [
-        {
-            "model": "qwen2.5:7b",
+            "model": GATEWAY_MODEL,
             "base_url": OLLAMA_API_V1,
             "api_key": OLLAMA_API_KEY,
             "api_type": "openai",
@@ -91,8 +58,6 @@ ROUTER_CONFIG = {
     "temperature": 0.3,
     "cache_seed": None,
 }
-
-DOCUMENTER_CONFIG = ROUTER_CONFIG  # Router와 동일 모델 공유
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # Docker 설정
