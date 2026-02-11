@@ -7,22 +7,25 @@
 ## 🌟 시스템 핵심 가치
 
 1.  **100% 로컬 보안**: 모든 데이터 처리가 로컬 기기 내에서 이루어져 민감한 소스코드 유출 위험이 없습니다.
-2.  **제로 비용**: 클라우드 LLM API 비용 없이 무제한으로 모델 시도-실패-수정 루프를 가동할 수 있습니다.
-3.  **TDD 자율 주행**: 에이전트가 스스로 테스트를 설계, 작성, 실행하며 오류를 수정하는 자가 치유(Self-healing) 워크플로우를 구현합니다.
-4.  **최적화된 성능**: Qwen3 라인업(1.5b ~ 32b)을 전략적으로 배치하고 메모리 스왑을 최적화하여 64GB 환경에서 성능을 극대화합니다.
+2.  **TDD 자율 주행 (Strict TDD)**: 모든 설계와 구현은 테스트 주도 개발(Test-Driven Development) 방식을 따릅니다. **"No Test, No Code"** 원칙을 엄격히 준수합니다.
+3.  **듀얼 맥 하이브리드 워크플로우**: 로컬 Qwen3(설계/검수)와 맥북 Claude Code(구현)의 협업을 통해 생산성을 극대화합니다.
+4.  **프로젝트 헌법 (CLAUDE.md)**: 에이전트가 지켜야 할 규칙과 학습된 지식을 `CLAUDE.md`에 집약하여 지속적으로 진화하는 개발 환경을 구축합니다.
+5.  **최적화된 성능**: Qwen3 라인업(1.5b ~ 32b)을 전략적으로 배치하고 메모리 스왑을 최적화하여 64GB 환경에서 성능을 극대화합니다.
 
 ---
 
 ## 🤖 에이전트 팀 구성 (The Agency)
 
-각 에이전트는 역할에 최적화된 Qwen3 모델을 사용하여 협업합니다.
+프로젝트 규모와 목적에 따라 두 가지 운영 모드를 지원합니다.
 
-| 역할 | 모델 (Ollama) | 주요 임무 |
-| :--- | :--- | :--- |
-| **Router** | `qwen3:1.5b` | 요청의 난이도를 분석하여 적절한 에이전트에게 작업을 배분 |
-| **Architect** | `qwen3-coder-next` | 시스템 아키텍처 설계, 기술 스택 결정, TDD 시나리오 정의 |
-| **Coder** | `qwen3-coder:30b` | 실제 기능 코드 및 테스트 코드 구현, 버그 수정 루프 수행 |
-| **Reviewer** | `qwen3:14b` | 코드 품질 검토, 보안 취약점 점검, 설계 준수 여부 확인 |
+### Mode A: Dual Mac 하이브리드 (Qwen3 + Claude Code)
+- **설계/검수**: 로컬 Mac M4 Pro (Qwen3)
+- **구현**: 맥북 (Claude Code)
+- **특징**: 프론티어 LLM의 강력한 코딩 능력과 로컬 LLM의 보안/설계 능력을 결합.
+
+### Mode B: 100% 로컬 AutoGen (Full Local)
+- **모든 역할**: 로컬 Mac M4 Pro (Qwen3 시리즈)
+- **특징**: 완전한 오프라인 환경, API 비용 제로, 고도의 자동화 루프.
 
 ---
 
@@ -66,7 +69,12 @@
 - [로컬 LLM 인터넷 연결 및 지식 확장](./docs/03_AutoGen_Agents/12_로컬_LLM_인터넷_연결_및_실시간_지식_확장.md)
 - *... 그 외 에이전트 로그 모니터링, 샌드박스 설정 등 포함*
 
-### [04. 운영 및 트러블슈팅](./docs/04_Operations)
+### [04. 아키텍처 및 워크플로우 (Architecture)](./docs/04_Architecture)
+- [듀얼 맥 & 3-Persona 워크플로우](./docs/04_Architecture/01_Dual_Mac_Git_Memory_Workflow.md)
+- [Claude TDD 가이드라인 (Strict TDD)](./docs/04_Architecture/02_Claude_TDD_Guideline.md)
+- [Claude Code 전문가 실전 팁](./docs/04_Architecture/03_Claude_Code_Expert_Tips.md)
+
+### [05. 운영 및 트러블슈팅](./docs/04_Operations)
 - [GitHub 이슈 자동 처리 설정](./docs/04_Operations/01_GitHub_이슈_자동_처리_설정.md)
 - [24시간 자동 운영 및 모니터링](./docs/04_Operations/02_24시간_자동_운영_및_모니터링.md)
 - [트러블슈팅 및 운영 팁](./docs/05_Troubleshooting/01_트러블슈팅_및_운영_팁.md)

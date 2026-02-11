@@ -19,7 +19,18 @@ from config import (
     TESTER_CONFIG,
     DOCUMENTER_CONFIG,
     DEV_REPO,
+    load_claude_rules,
+    BASE_INSTRUCTION,
 )
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 공통 규칙 주입 함수
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+def get_combined_prompt(base_prompt: str) -> str:
+    """기본 프롬프트에 CLAUDE.md 규칙을 결합"""
+    rules = load_claude_rules()
+    return f"{BASE_INSTRUCTION}\n{rules}\n\n[ROLE SPECIFIC INSTRUCTION]\n{base_prompt}"
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # 시스템 프롬프트
@@ -98,7 +109,7 @@ DOCUMENTER_PROMPT = """너는 기술 문서화 전문가(Technical Writer)야.
 def create_planner() -> autogen.AssistantAgent:
     return autogen.AssistantAgent(
         name="Planner",
-        system_message=PLANNER_PROMPT,
+        system_message=get_combined_prompt(PLANNER_PROMPT),
         llm_config=ARCHITECT_CONFIG,
     )
 
@@ -106,7 +117,7 @@ def create_planner() -> autogen.AssistantAgent:
 def create_coder() -> autogen.AssistantAgent:
     return autogen.AssistantAgent(
         name="Coder",
-        system_message=CODER_PROMPT,
+        system_message=get_combined_prompt(CODER_PROMPT),
         llm_config=CODER_CONFIG,
     )
 
@@ -114,7 +125,7 @@ def create_coder() -> autogen.AssistantAgent:
 def create_reviewer() -> autogen.AssistantAgent:
     return autogen.AssistantAgent(
         name="Reviewer",
-        system_message=REVIEWER_PROMPT,
+        system_message=get_combined_prompt(REVIEWER_PROMPT),
         llm_config=REVIEWER_CONFIG,
     )
 
@@ -124,7 +135,7 @@ def create_tester() -> autogen.UserProxyAgent:
     DEV_REPO.mkdir(parents=True, exist_ok=True)
     return autogen.UserProxyAgent(
         name="Tester",
-        system_message=TESTER_PROMPT,
+        system_message=get_combined_prompt(TESTER_PROMPT),
         human_input_mode="NEVER",
         max_consecutive_auto_reply=3,
         is_termination_msg=lambda x: "ALL_TESTS_PASSED" in (x.get("content", "") or ""),
@@ -139,7 +150,7 @@ def create_tester() -> autogen.UserProxyAgent:
 def create_documenter() -> autogen.AssistantAgent:
     return autogen.AssistantAgent(
         name="Documenter",
-        system_message=DOCUMENTER_PROMPT,
+        system_message=get_combined_prompt(DOCUMENTER_PROMPT),
         llm_config=DOCUMENTER_CONFIG,
     )
 

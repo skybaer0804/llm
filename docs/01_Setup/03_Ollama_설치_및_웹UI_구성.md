@@ -24,26 +24,23 @@ ollama --version
 curl http://localhost:11434
 ```
 
-## 2. 에이전트별 모델 다운로드
+## 2. 3대 페르소나 단일 모델 다운로드
 
-Mac M4 Pro 64GB 환경에 최적화된 모델 시리즈를 내려받습니다.
+Mac M4 Pro 64GB의 성능을 극대화하기 위해, **`qwen3-coder-next:q4_K_M`** 단일 모델을 사용하여 모든 페르소나(설계, 검수, 기록)를 수행합니다.
 
 ```bash
-# Router/Documenter: Qwen 2.5 7B (중계 및 문서화용 - 상주 모델)
-ollama pull qwen2.5:7b
-
-# Architect: Qwen3 Coder Next (고성능 설계용)
+# 핵심 두뇌: Qwen3 Coder Next (설계자, 검수자, 기록자 공용)
+# 80B MoE 구조의 최고 성능 모델이며, 약 52GB의 메모리를 점유합니다.
 ollama pull qwen3-coder-next:q4_K_M
 
-# Coder: Qwen3 Coder 30B (고속 코드 생성용)
-ollama pull qwen3-coder:30b
-
-# Reviewer: Qwen3 14B (빠른 검증용)
-ollama pull qwen3:14b
-
-# Embedding: 다국어 지원 임베딩 모델 (RAG 속도 및 정확도 향상)
+# Embedding: 다국어 지원 임베딩 모델 (RAG 및 문서 분석용)
 ollama pull bge-m3
+
+# (선택) Vision: 이미지 분석이 필요한 경우
+ollama pull qwen2-vl:7b
 ```
+
+> **💡 모델 선정 이유**: 여러 모델을 스왑하는 비용을 없애고, 64GB 메모리 환경에서 단 하나의 거대 모델에 모든 지능을 집중시켜 최고 품질의 결과물을 얻기 위함입니다.
 
 ## 3. OpenWebUI 구성 (Docker)
 

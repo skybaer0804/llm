@@ -20,9 +20,9 @@ gh auth login
 gh auth status
 ```
 
-## 2. GitHub 이슈 모니터 스크립트 (`monitor.py`)
+## 2. GitHub 이슈 모니터 및 컨트롤러 스크립트 (`monitor.py`)
 
-이 스크립트는 주기적으로 새 이슈를 확인하여 `dev_team.py`를 실행합니다.
+이 스크립트는 단순히 이슈를 감지하는 것을 넘어, **상태 관리 및 예외 처리 로직(Controller)**을 포함하여 시스템의 안정성을 보장합니다.
 
 ```python
 import subprocess
@@ -31,8 +31,32 @@ import time
 import logging
 from datetime import datetime
 
-# dev_team.py에서 정의한 실행 함수를 가져온다고 가정
-# from dev_team import initiate_dev_cycle
+class AgentController:
+    def __init__(self):
+        self.quota_status = "HEALTHY"  # HEALTHY, HOLD, PERMANENT_LIMIT
+
+    def check_system_readiness(self):
+        """에이전트 실행 전 시스템 및 쿼터 상태 체크"""
+        if self.quota_status == "PERMANENT_LIMIT":
+            logging.error("🚨 계정 제한 상태입니다. 수동 확인이 필요합니다.")
+            return False
+        return True
+
+    def handle_error(self, error_message, issue_number):
+        """사용자 지침(2026-02-11) 반영: 에러 핸들링 정책"""
+        if "rate_limit" in error_message or "429" in error_message:
+            self.quota_status = "HOLD"
+            self.report_to_github(issue_number, "⏳ API 할당량 초과로 인해 대기 중입니다.")
+        elif "expired" in error_message or "unauthorized" in error_message:
+            self.quota_status = "PERMANENT_LIMIT"
+            self.add_label(issue_number, "critical: agent-stopped")
+            self.report_to_github(issue_number, "❌ 에이전트 권한 만료로 작업이 중단되었습니다.")
+
+    def report_to_github(self, issue_number, message):
+        subprocess.run(["gh", "issue", "comment", str(issue_number), "-b", message])
+
+    def add_label(self, issue_number, label):
+        subprocess.run(["gh", "issue", "edit", str(issue_number), "--add-label", label])
 
 def get_open_issues():
     """상태가 'open'인 이슈 목록을 JSON으로 가져옵니다."""
@@ -42,31 +66,40 @@ def get_open_issues():
     )
     return json.loads(result.stdout) if result.returncode == 0 else []
 
-def process_issue(issue):
-    print(f"[{datetime.now()}] 이슈 #{issue['number']} 처리 시작: {issue['title']}")
+def process_issue(issue, controller):
+    if not controller.check_system_readiness():
+        return
+
+    print(f"[{datetime.now()}] 이슈 #{issue['number']} 처리 시작")
     
-    # 에이전트 팀에게 전달할 프롬프트 구성
-    task_description = f"GitHub Issue #{issue['number']}\nTitle: {issue['title']}\nBody: {issue['body']}"
-    
-    # initiate_dev_cycle(task_description) 호출 로직
-    # ...
-    
-    # 처리 완료 후 댓글 작성
-    subprocess.run([
-        "gh", "issue", "comment", str(issue['number']),
-        "-b", "✅ AutoGen 에이전트 팀이 이 이슈에 대한 구현 및 테스트를 완료했습니다."
-    ])
+    try:
+        # 실제 에이전트 실행 로직 (예: dev_team.py 호출)
+        # result = run_agent_team(issue)
+        pass
+    except Exception as e:
+        controller.handle_error(str(e), issue['number'])
 
 if __name__ == "__main__":
+    controller = AgentController()
     while True:
+        if controller.quota_status == "HOLD":
+            print("대기 모드(HOLD)... 1시간 후 재시도합니다.")
+            time.sleep(3600)
+            controller.quota_status = "HEALTHY" # 재시도를 위해 상태 초기화
+            continue
+
         issues = get_open_issues()
         for issue in issues:
-            # 중복 처리 방지 로직 (예: 특정 라벨이 없는 경우만 처리) 등을 추가 권장
-            process_issue(issue)
+            process_issue(issue, controller)
         
-        print("다음 확인까지 1시간 대기...")
         time.sleep(3600)
 ```
+
+## 3. 핵심 운영 전략
+
+1.  **순수 기능적 관점**: 페르소나 없이 시스템의 효율성과 안정성에만 집중합니다.
+2.  **Hold vs Action**: 임시 쿼터 제한 시에는 '대기(Hold)', 영구적 만료 시에는 '중단 및 보고(Action)'를 수행합니다.
+3.  **파일 기반 상태 관리**: SQLite 대신 Git 로그와 이슈/PR 상태를 활용하여 맥미니-맥북 간의 상태를 동기화합니다.
 
 ## 3. 자동화 워크플로우 예시
 

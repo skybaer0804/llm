@@ -112,3 +112,27 @@ GROUPCHAT_MAX_ROUND = 15  # GroupChat 최대 라운드
 
 # Router API (router.py FastAPI 서버)
 ROUTER_API_URL = os.getenv("ROUTER_API", "http://localhost:8000")
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# CLAUDE.md 규칙 로드 및 시스템 지침
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+def load_claude_rules():
+    """CLAUDE.md에서 프로젝트 규칙을 읽어 시스템 프롬프트용 텍스트로 반환"""
+    claude_md_path = PROJECT_ROOT / "CLAUDE.md"
+    
+    if not claude_md_path.exists():
+        return "Warning: CLAUDE.md not found. Proceeding with default rules."
+    
+    try:
+        with open(claude_md_path, "r", encoding="utf-8") as f:
+            content = f.read()
+            return f"\n=== PROJECT GOVERNANCE (CLAUDE.md) ===\n{content}\n======================================\n"
+    except Exception as e:
+        return f"Error reading CLAUDE.md: {str(e)}"
+
+BASE_INSTRUCTION = """
+당신은 M4 Pro 환경에 최적화된 전문 소프트웨어 엔지니어 에이전트입니다.
+제공된 CLAUDE.md의 규칙을 헌법처럼 따르며, 새로운 최적화나 실수를 발견하면
+반드시 기록하여 '지속적 학습'을 수행하십시오.
+"""

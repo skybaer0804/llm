@@ -1,0 +1,21 @@
+---
+description: TDD (Test-Driven Development) implementation rule for all coding tasks.
+globs: **/*.{py,js,ts,tsx,go,rs}
+---
+
+# TDD Implementation Rule
+
+You MUST follow Test-Driven Development (TDD) for all coding tasks, regardless of the size of the change.
+
+## Workflow
+1. **Read Task**: Read the task description in `tasks/pending/Task-XX.md`.
+2. **Write Test First**: Create or update test files in the `tests/` directory before writing any implementation code.
+3. **Verify Failure**: Run the tests and ensure they fail as expected.
+4. **Implement**: Write the minimum amount of code required to pass the tests.
+5. **Refactor**: Clean up the code while ensuring tests still pass.
+6. **Push**: Only push code after all tests pass locally.
+
+## Rules
+- **No Test, No Code**: Never submit implementation code without corresponding tests.
+- **Alignment**: Ensure tests align perfectly with the requirements defined in the Architect's design (`Task-XX.md`).
+- **Reviewer Protocol**: If you are acting as a Reviewer, you must verify the code against the Architect's test scenarios. Do not invent new requirements during review unless they are critical edge cases missed by the Architect.

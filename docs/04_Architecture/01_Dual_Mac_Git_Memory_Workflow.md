@@ -25,12 +25,14 @@
 *   **보안**: 외부 네트워크와 분리된 폐쇄망 통신 가능.
 
 ### 2.2 공유 메모리 (Git & SMB)
-Git 리포지토리를 단순 소스 저장소가 아닌 **"공유 기억장치(Shared Memory)"**로 활용합니다.
+Git 리포지토리를 단순 소스 저장소가 아닌 **"공유 기억장치(Shared Memory)"**로 활용합니다. 듀얼 맥 환경의 복잡성을 최소화하기 위해 별도의 DB(SQLite 등) 없이 파일 시스템과 Git 로그만으로 상태를 관리합니다.
 
 1.  **SMB 마운트**: 맥북의 프로젝트 폴더를 맥미니에 마운트하여 실시간 접근.
-2.  **Git 상태 관리**:
+2.  **파일 기반 상태 관리**:
     *   **`Task.md`**: 맥미니가 작성하는 구체적인 작업 지시서.
-    *   **`AGENT_STATUS.json`**: 각 에이전트의 현재 상태(진행 중, 대기, 에러) 공유.
+    *   **`issues/issue-{ID}/status.json`**: 각 이슈의 처리 상태(Queue, Analysis, Execution, Hold, Completed) 기록.
+    *   **Git Commit History**: 에이전트가 수행한 모든 변경 사항의 영구적 기록.
+    *   **GitHub Issues/PRs**: 라벨과 댓글을 실시간 운영 상태 저장소로 활용.
     *   **`SYSTEM_PAUSE.lock`**: Claude Code 쿼터 제한 시 생성되는 일시 정지 신호.
 
 ---
