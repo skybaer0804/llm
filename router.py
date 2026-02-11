@@ -1,15 +1,15 @@
 """
-AutoGen 에이전트용 지능형 LLM 라우터 (단일 모델 아키텍처)
+AutoGen 에이전트용 지능형 LLM 라우터 (Thunderbolt 분산 아키텍처)
 
 핵심 기능:
-1. 작업 분류 (Task Classification) - Gateway LLM이 난이도 판단
+1. 작업 분류 (Task Classification) - 맥북(Gateway)에서 난이도 판단
 2. 보안 스캔 (Security Scan) - 간접 프롬프트 주입 탐지
 3. 에이전트 라우팅 - 난이도 기반 최적 에이전트 배정
-4. 헬스 모니터링 - Ollama 상태 및 지연 시간 체크
+4. 분산 헬스 모니터링 - 맥북 및 맥미니 Ollama 상태 체크
 
 모델 구성:
-- Gateway:  qwen2.5:7b (4.7GB) - 상시 상주, 라우팅 분석 전용
-- Worker:   qwen3-coder-next:q4_K_M (51GB) - 모든 에이전트 작업 수행
+- Gateway:  llama3.1:8b (맥북, 24GB) - 상시 상주, 라우팅 분석 전용
+- Worker:   qwen3-coder-next:q4_K_M (맥미니, 64GB) - 모든 에이전트 작업 수행
 """
 
 import httpx
@@ -42,35 +42,40 @@ logger = logging.getLogger(__name__)
 # 설정 및 상수
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE", "http://localhost:11434")
+# 기기별 Ollama 접속 정보 (썬더볼트 브리지 아이피)
+MACBOOK_OLLAMA = "http://localhost:11434"
+MACMINI_OLLAMA = "http://169.254.19.104:11434"
+
 ROUTER_PORT = int(os.getenv("ROUTER_PORT", 8000))
 SNAPSHOT_DIR = Path(os.getenv("SNAPSHOT_DIR", "shared"))
 
-# 모델 구성 (단일 모델 아키텍처)
+# 모델 구성 (분산 아키텍처)
 MODEL_CONFIG = {
-    "qwen2.5:7b": {
+    "llama3.1:8b": {
         "name": "Gateway",
         "role": "라우팅 분석 및 보안 스캔",
-        "memory_gb": 4.7,
+        "base_url": MACBOOK_OLLAMA,  # 맥북에서 실행
+        "memory_gb": 8.5,
         "type": "gateway",
-        "context_length": 32000,
+        "context_length": 128000,
         "keep_alive": "-1",  # 영구 상주
-        "description": "작업 분류, 보안 스캔(Input Guardrail), 컨텍스트 요약",
+        "description": "Llama-3.1 기반 고성능 라우터 (맥북 24GB 활용)",
     },
     "qwen3-coder-next:q4_K_M": {
         "name": "Worker",
         "role": "모든 에이전트 작업 수행",
+        "base_url": MACMINI_OLLAMA,  # 맥미니에서 실행
         "memory_gb": 51,
         "type": "worker",
         "context_length": 256000,
         "keep_alive": "2h",  # 작업 중 상주
-        "description": "설계, 구현, 검수, 테스트, 문서화 - 모든 에이전트 공유",
+        "description": "거대 모델 기반 워커 (맥미니 64GB 활용)",
     },
 }
 
-# 게이트웨이 모델 (라우팅 분석 전용)
-GATEWAY_MODEL = "qwen2.5:7b"
-# 작업 모델 (모든 에이전트 공유)
+# 게이트웨이 모델 (맥북)
+GATEWAY_MODEL = "llama3.1:8b"
+# 작업 모델 (맥미니)
 WORKER_MODEL = "qwen3-coder-next:q4_K_M"
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -183,7 +188,7 @@ class LLMRouter:
     async def analyze_with_gateway(self, prompt: str,
                                     external_doc: Optional[str] = None,
                                     failure_history: int = 0) -> RoutingDecision:
-        """Gateway LLM(qwen2.5:7b)이 난이도/보안을 판단"""
+        """Gateway LLM(llama3.1:8b)이 난이도/보안을 판단 (맥북에서 수행)"""
         user_prompt = f"요청: {prompt}"
         if external_doc:
             user_prompt += f"\n\n<external_doc>\n{external_doc}\n</external_doc>"
@@ -191,8 +196,9 @@ class LLMRouter:
             user_prompt += f"\n\n[참고] 이 작업에서 {failure_history}회 실패했습니다."
 
         async with httpx.AsyncClient(timeout=120) as client:
+            url = MODEL_CONFIG[GATEWAY_MODEL]["base_url"]
             response = await client.post(
-                f"{OLLAMA_BASE_URL}/api/generate",
+                f"{url}/api/generate",
                 json={
                     "model": GATEWAY_MODEL,
                     "system": ROUTER_SYSTEM_PROMPT,
@@ -245,11 +251,12 @@ class LLMRouter:
     # ── 메모리 오케스트레이션 ──
 
     async def unload_model(self, model_name: str):
-        """Ollama 모델 언로드 (keep_alive=0 방식)"""
+        """Ollama 모델 언로드 (해당 모델이 위치한 기기에 요청)"""
         try:
+            url = MODEL_CONFIG[model_name]["base_url"]
             async with httpx.AsyncClient(timeout=30) as client:
                 await client.post(
-                    f"{OLLAMA_BASE_URL}/api/generate",
+                    f"{url}/api/generate",
                     json={
                         "model": model_name,
                         "prompt": "",
@@ -257,19 +264,14 @@ class LLMRouter:
                     },
                 )
             self.loaded_models.pop(model_name, None)
-            logger.info(f"[UNLOAD] {model_name}")
+            logger.info(f"[UNLOAD] {model_name} from {url}")
         except Exception as e:
             logger.error(f"[UNLOAD ERROR] {model_name}: {e}")
 
     async def ensure_worker_loaded(self):
-        """Worker 모델(52GB)이 메모리에 있는지 확인"""
-        memory = get_system_memory()
-        worker_size = MODEL_CONFIG[WORKER_MODEL]["memory_gb"]
-        if memory.available_gb < worker_size + 3:
-            logger.warning(
-                f"[MEMORY WARNING] 가용 {memory.available_gb:.1f}GB < "
-                f"필요 {worker_size}GB + 3GB 여유"
-            )
+        """Worker 모델(52GB)이 원격 맥미니 메모리에 로드될 준비가 되었는지 로깅"""
+        # 실제 원격 기기의 메모리를 실시간 체크하려면 원격 API가 필요하므로 여기서는 정책 기반 로깅만 수행
+        logger.info(f"[INFO] 원격 맥미니({MACMINI_OLLAMA})에 {WORKER_MODEL} 호출을 준비합니다.")
 
     # ── 에스컬레이션 ──
 
@@ -287,7 +289,7 @@ class LLMRouter:
                           system: Optional[str] = None,
                           temperature: float = 0.3,
                           max_tokens: int = 4096) -> Dict[str, Any]:
-        """Worker 모델 호출 (단일 모델이므로 항상 WORKER_MODEL 사용)"""
+        """Worker 모델 호출 (맥미니에서 수행)"""
         config = MODEL_CONFIG[WORKER_MODEL]
 
         payload: Dict[str, Any] = {
@@ -305,8 +307,9 @@ class LLMRouter:
             payload["system"] = system
 
         async with httpx.AsyncClient(timeout=600) as client:
+            url = config["base_url"]
             response = await client.post(
-                f"{OLLAMA_BASE_URL}/api/generate",
+                f"{url}/api/generate",
                 json=payload,
                 timeout=600,
             )
@@ -314,7 +317,7 @@ class LLMRouter:
         if response.status_code != 200:
             raise HTTPException(
                 status_code=500,
-                detail=f"Ollama error ({WORKER_MODEL}): {response.text}"
+                detail=f"Ollama error ({WORKER_MODEL} on MacMini): {response.text}"
             )
 
         self.loaded_models[WORKER_MODEL] = datetime.now().isoformat()
@@ -327,8 +330,8 @@ class LLMRouter:
 
 app = FastAPI(
     title="AutoGen LLM Router",
-    description="단일 모델 아키텍처 - 난이도 기반 에이전트 라우팅 & 보안 스캔",
-    version="4.0"
+    description="분산 모델 아키텍처 - 맥북(Gateway) & 맥미니(Worker) 협업",
+    version="4.1"
 )
 
 router_engine = LLMRouter()
@@ -339,24 +342,36 @@ router_engine = LLMRouter()
 
 @app.get("/health")
 async def health_check() -> Dict[str, Any]:
-    try:
-        async with httpx.AsyncClient(timeout=5) as client:
-            response = await client.get(OLLAMA_BASE_URL)
-            memory = get_system_memory()
-            return {
-                "status": "healthy",
-                "ollama": "connected" if response.status_code == 200 else "error",
-                "memory": {
-                    "total_gb": f"{memory.total_gb:.1f}",
-                    "used_gb": f"{memory.used_gb:.1f}",
-                    "available_gb": f"{memory.available_gb:.1f}",
-                    "percent": memory.percent_used,
-                },
-                "loaded_models": list(router_engine.loaded_models.keys()),
-                "timestamp": datetime.now().isoformat(),
-            }
-    except Exception as e:
-        return {"status": "unhealthy", "error": str(e), "timestamp": datetime.now().isoformat()}
+    health_results = {}
+    memory = get_system_memory()
+    
+    async with httpx.AsyncClient(timeout=5) as client:
+        # 맥북(로컬) 체크
+        try:
+            mb_res = await client.get(MACBOOK_OLLAMA)
+            health_results["macbook_ollama"] = "connected" if mb_res.status_code == 200 else "error"
+        except:
+            health_results["macbook_ollama"] = "disconnected"
+            
+        # 맥미니(원격) 체크
+        try:
+            mm_res = await client.get(MACMINI_OLLAMA)
+            health_results["macmini_ollama"] = "connected" if mm_res.status_code == 200 else "error"
+        except:
+            health_results["macmini_ollama"] = "disconnected (check thunderbolt)"
+
+    return {
+        "status": "healthy" if health_results["macbook_ollama"] == "connected" else "warning",
+        "nodes": health_results,
+        "local_memory": {
+            "total_gb": f"{memory.total_gb:.1f}",
+            "used_gb": f"{memory.used_gb:.1f}",
+            "available_gb": f"{memory.available_gb:.1f}",
+            "percent": memory.percent_used,
+        },
+        "loaded_models": list(router_engine.loaded_models.keys()),
+        "timestamp": datetime.now().isoformat(),
+    }
 
 
 @app.get("/models")
@@ -367,6 +382,7 @@ async def list_models() -> Dict[str, Any]:
             "model": model_key,
             "name": config["name"],
             "role": config["role"],
+            "base_url": config["base_url"],
             "memory_gb": config["memory_gb"],
             "type": config["type"],
             "keep_alive": config["keep_alive"],
@@ -387,12 +403,12 @@ async def get_memory() -> MemoryInfo:
 @app.post("/route", response_model=LLMResponse)
 async def route_request(req: LLMRequest) -> LLMResponse:
     """
-    메인 라우팅 엔드포인트 (단일 모델 아키텍처)
+    메인 라우팅 엔드포인트 (분산 아키텍처)
 
     프로세스:
-    1. Gateway(qwen2.5:7b)가 난이도 판단 + 보안 스캔
+    1. 맥북(Gateway: llama3.1)이 난이도 판단 + 보안 스캔
     2. 보안 위협 감지 시 차단
-    3. Worker(qwen3-coder-next) 호출
+    3. 맥미니(Worker: qwen3-coder) 호출
     """
     start_time = time.time()
     memory_before = get_system_memory()
@@ -441,10 +457,10 @@ async def route_request(req: LLMRequest) -> LLMResponse:
     if next_agent == "HUMAN":
         raise HTTPException(status_code=202, detail={"action": "HUMAN_REVIEW", "reason": decision.reason})
 
-    # ── Step 5: 메모리 확인 ──
+    # ── Step 5: 메모리/워커 확인 ──
     await router_engine.ensure_worker_loaded()
 
-    # ── Step 6: Worker 모델 호출 ──
+    # ── Step 6: Worker 모델 호출 (맥미니) ──
     full_prompt = req.prompt
     if req.context:
         full_prompt = f"## 컨텍스트\n{req.context}\n\n## 작업\n{req.prompt}"
@@ -456,7 +472,7 @@ async def route_request(req: LLMRequest) -> LLMResponse:
             max_tokens=req.max_tokens,
         )
     except Exception as e:
-        logger.error(f"[CALL ERROR] {WORKER_MODEL}: {e}")
+        logger.error(f"[CALL ERROR] {WORKER_MODEL} on MacMini: {e}")
         raise
 
     latency_ms = (time.time() - start_time) * 1000
@@ -559,11 +575,10 @@ if __name__ == "__main__":
     import uvicorn
 
     logger.info("=" * 60)
-    logger.info("AutoGen LLM Router v4.0 (단일 모델 아키텍처)")
-    logger.info(f"Ollama: {OLLAMA_BASE_URL}")
-    logger.info(f"Port: {ROUTER_PORT}")
-    logger.info(f"Gateway: {GATEWAY_MODEL} (상시 상주)")
-    logger.info(f"Worker: {WORKER_MODEL} (모든 에이전트 공유)")
+    logger.info("AutoGen LLM Router v4.1 (Thunderbolt Distributed)")
+    logger.info(f"Gateway (MacBook): {GATEWAY_MODEL} -> {MACBOOK_OLLAMA}")
+    logger.info(f"Worker  (MacMini): {WORKER_MODEL} -> {MACMINI_OLLAMA}")
+    logger.info(f"Local Memory (MacBook): {get_system_memory().total_gb:.1f}GB")
     logger.info("=" * 60)
 
     uvicorn.run(app, host="127.0.0.1", port=ROUTER_PORT, log_level="info")
