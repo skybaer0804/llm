@@ -4,6 +4,8 @@ Ollama를 통해 로컬 LLM 엔진을 구축하고, 편리한 인터페이스를
 
 ## 1. Ollama 설치 및 실행
 
+*주의: 대형 모델(`qwen3-coder-next:q4_K_M`)을 사용하기 전, 반드시 [00. macOS 시스템 최적화](./00_macOS_시스템_최적화.md) 가이드를 따라 GPU 메모리 한계를 확장하시기 바랍니다.*
+
 ### Homebrew를 이용한 설치
 ```bash
 # Homebrew 미설치 시 먼저 설치
