@@ -52,6 +52,32 @@ Open WebUI의 'Collection' 기능을 사용하면 프로젝트별 또는 시점�
 *   **설정**: `Settings` -> `Documents` -> `Query Settings`에서 **Score Threshold**를 **0.5 이상**으로 상향하십시오.
 *   **효과**: 질문과 관련성이 떨어지는 파편화된 과거 정보는 모델에게 전달되지 않고 자동으로 필터링됩니다.
 
+### 4) Qwen 전용 최적화 RAG 템플릿
+Qwen 모델 사용 시 답변에 한자가 섞이는 것을 방지하기 위해 `Query Settings`의 `RAG Template`을 다음과 같이 수정하십시오.
+
+```markdown
+### Task:
+Respond to the user query using the provided context.
+
+### Guidelines:
+- If you don't know the answer, clearly state that.
+- **IMPORTANT: Respond ONLY in Korean or English, depending on the user's language.**
+- **STRICT RULE: DO NOT use Chinese characters (Hanja) under any circumstances. Use Hangul for all Korean text.**
+- If the answer isn't present in the context but you possess the knowledge, explain this and provide the answer.
+- Only include inline citations using [id] when the <source> tag includes an id attribute.
+- Do not use XML tags in your response.
+
+### Example of Citation:
+"연구에 따르면 제시된 방법은 효율성을 20% 향상시킵니다 [1]."
+
+### Output:
+Provide a clear response in pure Hangul or English.
+
+<context>
+{{CONTEXT}}
+</context>
+```
+
 ---
 
 ## 5. 에이전시 운영을 위한 최종 추천 전략

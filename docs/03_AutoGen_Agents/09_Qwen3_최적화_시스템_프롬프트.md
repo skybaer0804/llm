@@ -139,23 +139,27 @@ Qwen3 모델(특히 Coder 시리즈)의 잠재력을 극대화하기 위해 설�
 
 ## 💡 통합 운영을 위한 프롬프트 전략
 
-### 1. 14b 모델의 페르소나 스위칭
+### 1. 한자 출력 방지 (중요: Qwen 전용)
+Qwen 모델은 중국어 학습 데이터 비중이 높아 한국어 답변 중 한자를 섞는 경향이 있습니다. 이를 방지하기 위해 모든 시스템 프롬프트 하단에 아래 문구를 추가하는 것을 권장합니다.
+- **추가 문구**: `You must communicate in Korean or English only. Never use Chinese characters (Hanja). Use Hangul for all Korean text.`
+
+### 2. 14b 모델의 페르소나 스위칭
 Reviewer와 Tester는 동일한 14b 모델을 사용하므로, 호출 시점에 시스템 프롬프트를 교체하여 인격을 완전히 분리하십시오.
 - **Tester 모드**: "에러를 찾는 데 혈안이 된 QA"로 작동.
 - **Reviewer 모드**: "품질을 높이는 멘토"로 작동.
 
-### 2. Router의 요약 능력 강화
+### 3. Router의 요약 능력 강화
 1.5b 모델은 기억력이 짧을 수 있습니다. 따라서 Router에게 "이전 맥락 요약" 임무를 강하게 부여하여, 무거운 모델(32b, 52b)이 로드되었을 때 즉시 상황을 파악할 수 있도록 돕는 것이 핵심입니다.
 
-### 3. Human_Lead 개입 지점 (Human-in-the-loop)
+### 4. Human_Lead 개입 지점 (Human-in-the-loop)
 Router의 프롬프트에 "판단이 불가능하거나 사용자의 결정이 필요한 경우 next_agent: HUMAN으로 응답하라"는 지침을 추가하여, 복잡한 의사결정 시 시스템이 중단되지 않고 사용자에게 피드백을 요청하도록 설계합니다.
 
-### 4. 하이브리드 주입 전략 (Modelfile + API)
+### 5. 하이브리드 주입 전략 (Modelfile + API)
 프롬프트를 효율적으로 관리하고 성능을 높이기 위해, 변하지 않는 페르소나는 **Ollama Modelfile**에 '굽고(Baking)', 가변적인 지시사항은 **API system 파라미터**로 전달하는 하이브리드 방식을 권장합니다.
 - 상세 내용은 [11. Ollama Modelfile 최적화 가이드](./11_Ollama_Modelfile_최적화_가이드.md)를 참고하세요.
 
 ## Qwen3 최적화 팁
 
 1.  **JSON 강제**: 모델이 잡담 없이 구조화된 데이터만 내뱉도록 시스템 프롬프트 마지막에 "반드시 JSON으로만 응답하라"는 문구를 반복하거나, API 호출 시 `response_format={"type": "json_object"}`를 명시적으로 설정합니다.
-2.  **단계별 추론**: 복잡한 작업의 경우 "Think step by step" 문구를 포함시켜 추론 과정을 거치도록 유도합니다.
+2.  **단계별 추론**: 복잡한 작업의 경우 "Think step by step" 문구를 포함시켜 추론 과정을 거치도록 유도합니다. (단, [추론 토큰 소모](../02_System_Design/06_Qwen3_토큰_사용량_및_효율성.md)에 유의하십시오.)
 3.  **YAGNI 원칙 주입**: Coder 모델에게는 필요한 기능 이상의 오버엔지니어링을 막기 위해 YAGNI(You Ain't Gonna Need It) 원칙을 상기시키는 것이 좋습니다.
