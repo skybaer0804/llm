@@ -1,7 +1,7 @@
 """
-AutoGen 에이전트 팀 정의 (단일 모델 아키텍처)
+AutoGen 에이전트 팀 정의 (Thunderbolt 분산 아키텍처)
 
-모든 에이전트가 qwen3-coder-next:q4_K_M 단일 모델을 공유.
+모든 에이전트가 Mac Mini의 qwen3-coder-next:q4_K_M을 공유.
 페르소나 없이 기능적 지시사항만 부여.
 CLAUDE.md 프로젝트 규칙이 모든 에이전트에 자동 주입됨.
 """

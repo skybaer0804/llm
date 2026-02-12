@@ -1,9 +1,9 @@
 """
 LLM 설정 및 프로젝트 상수
 
-단일 모델 아키텍처:
-- 작업 모델: qwen3-coder-next:q4_K_M (52GB) - 모든 에이전트 공유
-- 게이트웨이: qwen2.5:7b (4.7GB) - 라우터 분석 전용
+Thunderbolt 분산 아키텍처:
+- Gateway: llama3.1:8b (MacBook, 24GB) - 라우팅 분석 전용
+- Worker:  qwen3-coder-next:q4_K_M (Mac Mini, 64GB) - 모든 에이전트 공유
 """
 
 import os
@@ -18,24 +18,24 @@ DEV_REPO = PROJECT_ROOT / "dev_repo"
 SNAPSHOT_DIR = PROJECT_ROOT / "shared"
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# Ollama 연결
+# Ollama 연결 (Thunderbolt 분산)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE", "http://localhost:11434")
-OLLAMA_API_V1 = f"{OLLAMA_BASE_URL}/v1"
+MACBOOK_OLLAMA = os.getenv("MACBOOK_OLLAMA", "http://localhost:11434")
+MACMINI_OLLAMA = os.getenv("MACMINI_OLLAMA", "http://169.254.19.104:11434")
 OLLAMA_API_KEY = "ollama"  # 로컬이므로 임의값
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# LLM 모델 설정 (단일 모델 아키텍처)
+# LLM 모델 설정 (Thunderbolt 분산 아키텍처)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-# 작업 모델 - 모든 에이전트가 공유 (52GB)
+# 작업 모델 - 모든 에이전트가 공유 (Mac Mini, 52GB)
 MAIN_MODEL = "qwen3-coder-next:q4_K_M"
 MAIN_LLM_CONFIG = {
     "config_list": [
         {
             "model": MAIN_MODEL,
-            "base_url": OLLAMA_API_V1,
+            "base_url": f"{MACMINI_OLLAMA}/v1",
             "api_key": OLLAMA_API_KEY,
             "api_type": "openai",
         }
@@ -44,13 +44,13 @@ MAIN_LLM_CONFIG = {
     "cache_seed": None,
 }
 
-# 게이트웨이 모델 - 라우터 분석 전용 (4.7GB, 상시 상주)
-GATEWAY_MODEL = "qwen2.5:7b"
+# 게이트웨이 모델 - 라우터 분석 전용 (MacBook, 상시 상주)
+GATEWAY_MODEL = "llama3.1:8b"
 GATEWAY_LLM_CONFIG = {
     "config_list": [
         {
             "model": GATEWAY_MODEL,
-            "base_url": OLLAMA_API_V1,
+            "base_url": f"{MACBOOK_OLLAMA}/v1",
             "api_key": OLLAMA_API_KEY,
             "api_type": "openai",
         }
