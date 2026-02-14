@@ -59,6 +59,10 @@ AI가 읽기 좋게 웹사이트 본문만 긁어다 주기 때문에 RAG 효율
 
 **Qwen 2.5** 시리즈는 이러한 약속된 형식을 이해하고 따르는 능력이 매우 뛰어나 Function Calling에 매우 적합합니다.
 
+### LiteLLM으로 OpenAI 클라이언트에 검색 도구 붙이기
+
+Open WebUI 대신 **Antigravity**, **Continue** 같은 OpenAI 규격 클라이언트를 쓰는 경우, **LiteLLM**을 중간에 두면 Ollama + Serper(검색)를 한 엔드포인트로 제공할 수 있습니다. LiteLLM이 "인터넷 검색이 필요해"라는 모델 신호를 받아 Serper API를 대신 호출하고 결과를 다시 모델에게 전달합니다. 상세 구성은 [01_Setup 08. LiteLLM – OpenAI 호환 프록시](../01_Setup/08_LiteLLM_OpenAI_호환_프록시.md)를 참고하세요.
+
 ## 4. RAG와 실시간 웹 검색의 차이
 
 로컬 LLM에게 인터넷 권한을 준다는 것은 "모델에게 브라우저를 쓸 수 있는 능력을 부여하는 것"과 같습니다.

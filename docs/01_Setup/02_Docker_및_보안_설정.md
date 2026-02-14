@@ -32,7 +32,7 @@ docker run -d \
 ### 안전한 원격 접근 (VPN 활용)
 공용 인터넷에 포트를 열지 않고 안전하게 접속하는 방법입니다.
 
-- **Tailscale (권장)**: 설정이 가장 간편하며 무료로 기기 간 전용망을 구축합니다.
+- **Tailscale (권장)**: 설정이 가장 간편하며 무료로 기기 간 전용망을 구축합니다. **맥미니 Ollama 원격 접속**을 위한 상세 설정·기기별 앱·접속 주소는 [07. Tailscale 기반 Ollama 원격 접속](./07_Tailscale_기반_Ollama_원격_접속.md)을 참고하세요.
   ```bash
   brew install tailscale
   tailscale up

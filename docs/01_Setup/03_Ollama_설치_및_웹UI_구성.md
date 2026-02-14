@@ -2,15 +2,14 @@
 
 Ollama를 통해 로컬 LLM 엔진을 구축하고, 편리한 인터페이스를 위한 OpenWebUI를 설정합니다.
 
-## 1. Ollama 설치 및 실행
+## 1. Ollama 설치 및 실행 (분산 환경)
 
-*주의: 대형 모델(`qwen3-coder-next:q4_K_M`)을 사용하기 전, 반드시 [00. macOS 시스템 최적화](./00_macOS_시스템_최적화.md) 가이드를 따라 GPU 메모리 한계를 확장하시기 바랍니다.*
+분산 아키텍처 구성을 위해 **MacBook(Gateway)**과 **MacMini(Worker)** 두 기기에 각각 Ollama를 설치해야 합니다.
 
-### Homebrew를 이용한 설치
+*주의: 대형 모델(`qwen3-coder-next:q4_K_M`)을 사용하는 MacMini는 반드시 [00. macOS 시스템 최적화](./00_macOS_시스템_최적화.md) 가이드를 따라 GPU 메모리 한계를 확장하시기 바랍니다.*
+
+### Homebrew를 이용한 설치 (두 기기 공통)
 ```bash
-# Homebrew 미설치 시 먼저 설치
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
 # Ollama 설치
 brew install ollama
 
@@ -18,29 +17,39 @@ brew install ollama
 brew services start ollama
 ```
 
-### 설치 확인
+### 설치 확인 및 네트워크 허용
+원격 호출을 위해 Ollama가 외부 접속을 허용해야 합니다.
 ```bash
-ollama --version
-curl http://localhost:11434
+# 환경 변수 설정 (zsh 기준)
+echo 'export OLLAMA_HOST="0.0.0.0"' >> ~/.zshrc
+source ~/.zshrc
+
+# 서비스 재시작
+brew services restart ollama
 ```
 
-## 2. 3대 페르소나 단일 모델 다운로드
+> **Tailscale 등 외부 기기에서 접속**할 때는 `OLLAMA_ORIGINS="*"`도 필요합니다. 휴대폰·맥북 등에서 맥미니 Ollama 접속 방법은 [07. Tailscale 기반 Ollama 원격 접속](./07_Tailscale_기반_Ollama_원격_접속.md)을 참고하세요.
 
-Mac M4 Pro 64GB의 성능을 극대화하기 위해, **`qwen3-coder-next:q4_K_M`** 단일 모델을 사용하여 모든 페르소나(설계, 검수, 기록)를 수행합니다.
+## 2. 노드별 모델 다운로드
 
+각 기기의 역할에 맞는 모델을 다운로드합니다.
+
+### ① MacBook (Gateway Node)
 ```bash
-# 핵심 두뇌: Qwen3 Coder Next (설계자, 검수자, 기록자 공용)
-# 80B MoE 구조의 최고 성능 모델이며, 약 52GB의 메모리를 점유합니다.
+# 라우팅 및 보안 분석 전용
+ollama pull llama3.1:8b
+```
+
+### ② MacMini (Worker Node)
+```bash
+# 핵심 두뇌: 모든 에이전트 작업 수행
 ollama pull qwen3-coder-next:q4_K_M
 
-# Embedding: 다국어 지원 임베딩 모델 (RAG 및 문서 분석용)
+# Embedding: RAG 및 문서 분석용
 ollama pull bge-m3
-
-# (선택) Vision: 이미지 분석이 필요한 경우
-ollama pull qwen2-vl:7b
 ```
 
-> **💡 모델 선정 이유**: 여러 모델을 스왑하는 비용을 없애고, 64GB 메모리 환경에서 단 하나의 거대 모델에 모든 지능을 집중시켜 최고 품질의 결과물을 얻기 위함입니다.
+> **💡 모델 배치 전략**: MacBook은 가볍고 빠른 `llama3.1:8b`를 상주시균으로써 반응성을 확보하고, MacMini는 64GB 자원을 온전히 `qwen3-coder-next`에 할당하여 최고 품질의 결과물을 얻습니다.
 
 ## 3. OpenWebUI 구성 (Docker)
 
@@ -68,37 +77,13 @@ docker run -d \
     *   **Settings** → **Connections** 이동.
     *   **Ollama API URL**에 `http://host.docker.internal:11434` 입력 후 저장 버튼(새로고침 아이콘) 클릭.
 3.  **임베딩 모델 설정 (Embedding Model)**:
-    OpenWebUI 인터페이스 업데이트로 설정 위치가 헷갈릴 수 있습니다. 아래 경로를 따라 `bge-m3` 모델을 적용하세요.
     *   **진입 경로**: 왼쪽 하단 **사용자 프로필 이미지/이름 클릭** → **설정 (Settings)** → 좌측 메뉴의 **문서 (Documents)** 탭 클릭.
     *   **설정 방법**:
-        *   **임베딩 엔진 (Embedding Engine)**: `Ollama`를 선택하세요. (옵션이 없다면 'Local' 확인 필요)
-        *   **임베딩 모델 (Embedding Model)**: 직접 `bge-m3`라고 입력한 뒤, 칸 옆의 **새로고침(화살표 원형 아이콘)** 또는 **다운로드/저장 아이콘**을 클릭하세요.
-    *   *Tip: 이렇게 설정하면 RAG를 위해 문서를 업로드할 때 처리 속도와 검색 정확도가 비약적으로 향상됩니다.*
-4.  **설정 칸이 안 보일 경우 (관리자 권한)**:
-    *   해당 메뉴가 보이지 않는다면 관리자 권한 문제일 수 있습니다. 왼쪽 하단의 **어드민 패널 (Admin Panel)** → **설정 (Settings)** → **문서 (Documents)** 경로로 진입하여 전체적인 모델 변경 권한이 활성화되어 있는지 확인하세요.
-5.  이제 메인 화면의 모델 선택 창에서 다운로드한 Qwen3 모델들이 정상적으로 표시됩니다.
+        *   **임베딩 엔진 (Embedding Engine)**: `Ollama`를 선택하세요.
+        *   **임베딩 모델 (Embedding Model)**: `bge-m3` 입력 후 새로고침.
 
-### 웹 검색(Web Search) 기능 활성화 (Serper.dev 추천)
+## 4. 웹 검색(Web Search) 기능 활성화 (Serper.dev 추천)
 
-#### 1. 기능 설정
-1. **API 키 발급**: [Serper.dev](https://serper.dev) 접속 후 가입 (2,500회 무료 크레딧 제공).
-2. **Settings** → **Web Search** 이동.
-3. `Enable Web Search` 스위치를 On으로 변경.
-4. **Search Engine** 항목에서 `Serper`를 선택.
-5. **Serper API Key** 입력란에 발급받은 키를 붙여넣고 **Save** 클릭.
-
-#### 2. 채팅에서 사용해보기
-설정을 마쳤다면 이제 메인 채팅창으로 가서 테스트해 보세요.
-
-*   **지구본 아이콘 확인**: 메시지 입력창 근처에 지구본 모양 아이콘이 생겼을 겁니다. 이 아이콘이 켜져 있어야 검색을 수행합니다.
-*   **질문 던지기**: "오늘 서울 날씨 어때?" 또는 "현재 비트코인 가격 알려줘" 같은 최신 정보를 물어보세요.
-*   **작동 확인**: AI가 답변하기 전에 **"Searching the web..."** 이라는 메시지가 뜨면 성공입니다!
-*   **Tip**: 답변 하단의 지구본 아이콘을 클릭하여 개별 채팅별로 기능을 켜고 끌 수 있습니다.
-
-## 4. 멀티모달(비전) 지원
-이미지 분석이 필요한 경우 비전 전용 모델을 추가로 설치할 수 있습니다.
-```bash
-# Qwen2-VL 또는 Llama 비전 모델 등
-ollama pull qwen2-vl:7b
-```
-OpenWebUI 대화창에 이미지를 업로드하여 분석 성능을 테스트해보세요.
+1. **Serper.dev** API 키 발급.
+2. **Settings** → **Web Search** 이동하여 Serper 선택 및 키 입력.
+3. 채팅창의 지구본 아이콘을 활성화하여 사용.

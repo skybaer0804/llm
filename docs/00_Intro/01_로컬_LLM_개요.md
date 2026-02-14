@@ -24,11 +24,8 @@
 
 본 프로젝트의 최종 목적은 **Mac M4 Pro 64GB 환경에서 최신 Qwen3 모델 시리즈를 활용한 AutoGen 멀티 에이전트 협업 시스템 구축**입니다.
 
-- **🛰️ Router (Gateway)**: `qwen2.5:7b` - 시스템 관문으로서 요청 분석 및 에이전트 라우팅 수행.
-- **🧠 Planner (Architect)**: `qwen3-coder-next:q4_K_M` - 요구사항 분석 및 시스템 아키텍처 설계.
-- **💻 Dev1_Senior (Coder)**: `qwen3-coder:30b` - 핵심 기능 구현 및 TDD 기반 고속 코드 생성.
-- **👀 Dev2_Reviewer / Tester**: `qwen3:14b` - 코드 품질 검수 및 pytest 기반 자동화 테스트 수행.
-- **📝 Documenter**: `qwen2.5:7b` - 협업 기록을 취합한 기술 문서 및 최종 리포트 작성.
-- **🚀 Frontier LLM**: (외부) GPT-4o / Claude - 로컬 한계 초과 시 활용하는 SOS 파트너.
+- **🛰️ Router (Gateway)**: `llama3.1:8b` (MacBook) - 시스템 관문으로서 요청 분석 및 보안 스캔 수행.
+- **🧠 Core Worker**: `qwen3-coder-next:q4_K_M` (MacMini) - 설계, 코딩, 검증 등 모든 핵심 에이전트 작업 수행.
+- **🚀 Frontier LLM**: Gemini 3 Flash (Cloud) - 로컬 한계 초과 시 활용하는 SOS 파트너.
 
-이를 통해 기획부터 구현, 검증, 문서화까지 자동화된 'Full-Stack' 개발 파이프라인을 로컬 환경에서 완벽하게 구현하는 것을 목표로 합니다.
+이를 통해 MacBook(Gateway)과 MacMini(Worker)가 썬더볼트로 연결된 **분산형 AI 워크스테이션** 환경에서 고성능 개발 파이프라인을 구축하는 것을 목표로 합니다.
