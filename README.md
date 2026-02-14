@@ -9,8 +9,9 @@
 1.  **100% 로컬 보안**: 모든 데이터 처리가 로컬 기기 내에서 이루어져 민감한 소스코드 유출 위험이 없습니다.
 2.  **TDD 자율 주행 (Strict TDD)**: 모든 설계와 구현은 테스트 주도 개발(Test-Driven Development) 방식을 따릅니다. **"No Test, No Code"** 원칙을 엄격히 준수합니다.
 3.  **듀얼 맥 하이브리드 워크플로우**: 로컬 Qwen3(설계/검수)와 맥북 Claude Code(구현)의 협업을 통해 생산성을 극대화합니다.
-4.  **프로젝트 헌법 (CLAUDE.md)**: 에이전트가 지켜야 할 규칙과 학습된 지식을 `CLAUDE.md`에 집약하여 지속적으로 진화하는 개발 환경을 구축합니다.
+4.  **프로젝트 헌법 (CLAUDE.md / RULES.md)**: 에이전트가 지켜야 할 규칙과 학습된 지식을 `CLAUDE.md`와 `RULES.md`에 집약하여 지속적으로 진화하는 개발 환경을 구축합니다.
 5.  **최적화된 성능**: Qwen3 라인업(1.5b ~ 32b)을 전략적으로 배치하고 메모리 스왑을 최적화하여 64GB 환경에서 성능을 극대화합니다.
+6.  **MCP 및 원격 연동**: Tailscale과 MCP(Model Context Protocol)를 통해 서로 다른 기기 간의 강력한 협업 환경을 제공합니다.
 
 ---
 
@@ -54,6 +55,11 @@
 - [Ollama 설치 및 웹 UI 구성](./docs/01_Setup/03_Ollama_설치_및_웹UI_구성.md)
 - [AutoGen 설치 및 환경 확인](./docs/01_Setup/04_AutoGen_설치_및_환경_확인.md)
 - [Claude Code CLI 설치 및 설정](./docs/01_Setup/05_Claude_Code_CLI_설치_및_설정.md)
+- [Git 관리 및 워크플로우 가이드](./docs/01_Setup/06_Git_관리_및_워크플로우_가이드.md)
+- [Tailscale 기반 Ollama 원격 접속](./docs/01_Setup/07_Tailscale_기반_Ollama_원격_접속.md)
+- [LiteLLM OpenAI 호환 프록시](./docs/01_Setup/08_LiteLLM_OpenAI_호환_프록시.md)
+- [Anti-gravity 및 MCP 연동 가이드](./docs/01_Setup/09_Anti-gravity_및_MCP_연동_가이드.md)
+- [Cursor + ngrok 로컬 Ollama 연동 가이드](./docs/01_Setup/10_Cursor_ngrok_로컬_Ollama_연동.md)
 
 ### [02. 시스템 설계 (System Design)](./docs/02_System_Design)
 - [Qwen3 모델 구성 전략](./docs/02_System_Design/01_Qwen3_모델_구성_전략.md)
@@ -77,6 +83,7 @@
 ### [05. 운영 및 트러블슈팅](./docs/04_Operations)
 - [GitHub 이슈 자동 처리 설정](./docs/04_Operations/01_GitHub_이슈_자동_처리_설정.md)
 - [24시간 자동 운영 및 모니터링](./docs/04_Operations/02_24시간_자동_운영_및_모니터링.md)
+- [매일의 실행 루틴 및 자동화](./docs/04_Operations/03_매일의_실행_루틴_및_자동화.md)
 - [트러블슈팅 및 운영 팁](./docs/05_Troubleshooting/01_트러블슈팅_및_운영_팁.md)
 
 ---
