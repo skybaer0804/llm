@@ -1,0 +1,9 @@
+{
+  "model": "qwen-coder",
+  "messages": [
+    {"role": "system", "content": "너는 시니어 개발자다. 요청받은 파일의 전체 내용을 마크다운으로 출력하라."},
+    {"role": "user", "content": "README.md를 최신화해줘. 이 프로젝트는 Dual-Mac(MacBook+MacMini) 분산 LLM 에이전트 시스템이다. 주요 기능: 1) AutoGen 멀티에이전트 TDD 개발 2) Thunderbolt Bridge 분산 추론 3) LiteLLM+Tailscale로 외부 접속 지원. 기술스택: Python 3.12, Ollama, qwen3-coder-next, FastAPI, pytest. README.md 전체를 출력하라."}
+  ],
+  "temperature": 0.3,
+  "stream": false
+}

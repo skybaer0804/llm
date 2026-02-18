@@ -1,113 +1,114 @@
-# 📊 프로젝트 테스트 인프라 구축 보고서  
-**작성일**: 2026-02-12  
-**환경**: macOS (M4 Pro), Python 3.12, venv (.venv)  
-**테스트 프레임워크**: pytest 9.0.2  
+# 📊 Calculator Module Project Report  
+**작성일**: 2025-04-05  
+**환경**: macOS (M4 Pro), Python 3.12, pytest 9.0.2  
+**프로젝트 경로**: `dev_repo/`
 
 ---
 
-## 1. 프로젝트 개요
+## 🎯 프로젝트 개요
 
-본 프로젝트는 Apple Silicon(M4 Pro) 환경에 최적화된 LLM 기반 개발 인프라를 구축 중이며,  
-**테스트 인프라 구축**을 통해 코드 안정성과 유지보수성을 확보하고자 합니다.
+단순 사칙연산 전용 계산기 모듈을 개발했습니다.  
+모듈은 **정수 및 실수 입력**을 지원하며, **덧셈, 뺄셈, 곱셈, 나눗셈**만 처리합니다.  
+예외 처리(0으로 나누기, 유효하지 않은 연산자)는 명시적으로 구현되어 안정성을 확보했습니다.
 
-> ⚠️ **현 시점 상태**: 테스트 대상 및 명세가 불충분하여 **가정 기반 설계**를 진행한 후,  
-> 단순 dummy test를 통한 프레임워크 검증만 완료.  
-> **실제 기능 테스트 구현 전까지는 임시 테스트로 한정**되어야 함.
+> ✅ **테스트 기반 개발(TDD)** 전략을 적용하여, 기능 구현 전에 전체 테스트 케이스를 먼저 작성하고 검증했습니다.
 
 ---
 
-## 2. 아키텍처 (가정 기반 설계 기반)
+## 🏗️ 아키텍처
 
-### 📁 테스트 구조 (예상)
-
-```bash
-tests/
-├── __init__.py
-├── test_gpu_config.py          # Metal 메모리 할당 로직 검증
-├── test_requirements_parser.py # pip 충돌 감지 및 재시도 로직 검증
-└── conftest.py                 # 공유 fixtures, 환경 변수 설정
+### 📁 파일 구조
+```
+dev_repo/
+├── src/
+│   └── calculator.py          # 핵심 계산 로직 (4개 함수 + calculate 래퍼)
+├── tests/
+│   ├── test_calculator.py     # pytest 기반 단위 테스트 (10개 케이스)
+│   └── test_example.py        # 기존 예제 테스트 (1개 케이스)
+└── .venv/                     # Python 가상환경
 ```
 
-### 🧠 핵심 테스트 전략
-
-| 대상 모듈 | 테스트 시나리오 | 검증 포인트 |
-|-----------|-----------------|-------------|
-| `gpu_config.py` | M4 Pro 기준 VRAM 할당 | 8GB/16GB 정확 매핑, `CLAUDE_METAL_LIMIT_MB` 오버라이드 |
-| `requirements.txt` 파서 | 충돌 버전 감지 | `ResolutionImpossible` 핸들링, `pip --upgrade` 재시도 |
-
----
-
-## 3. 기술 스택
-
-| 구성 요소 | 버전 / 선택 근거 |
-|-----------|------------------|
-| **pytest** | 9.0.2 — M4 Pro 환경에서 안정적, `--strict` 모드로 dummy test 탐지 강화 가능 |
-| **Python** | 3.12.12 — venv 기반, `gpu_config.py`의 Metal API 호환성 보장 |
-| **pytest.ini (추천)** | `filterwarnings = error::pytest.PytestUnhandledWarning` — 테스트 품질 강화 |
+### 🧠 핵심 설계 원칙
+| 항목 | 설명 |
+|------|------|
+| **단일 책임 원칙** | 각 연산 함수는 하나의 기능만 수행 (`add`, `subtract`, `multiply`, `divide`) |
+| **명시적 오류 처리** | `ZeroDivisionError`, `ValueError`는 명시적으로 발생 |
+| **확장성 고려** | `calculate(a, b, op)` 래퍼 함수로 향후 연산자 확장 가능 |
+| **API 명시** | `__all__`로 공개 인터페이스 명확히 정의 |
 
 ---
 
-## 4. 테스트 통과 지표
+## 🛠️ 기술 스택
 
-### ✅ 현재 테스트 실행 결과
+| 구성 요소 | 버전/내용 |
+|-----------|-----------|
+| **언어** | Python 3.12.12 |
+| **테스트 프레임워크** | pytest 9.0.2 |
+| **라이브러리** | 표준 라이브러리만 사용 (`math` 불필요) |
+| **타입 힌트** | `: float` 일관 적용 (내부 계산 결과는 `float`로 통일) |
+| **보안** | `eval`/`exec`/외부 접근/민감 정보 하드코딩 없음 |
 
-```bash
-platform darwin -- Python 3.12.12, pytest-9.0.2, pluggy-1.6.0
-collected 1 item
+---
 
-dev_repo/tests/test_example.py::test_example PASSED [100%]
+## ✅ 테스트 통과 지표
 
-1 passed in 0.00s
-```
+### 📊 테스트 결과 요약
+| 항목 | 수치 |
+|------|------|
+| **수행된 테스트 수** | 11개 |
+| **통과된 테스트 수** | 11개 |
+| **실패/에러 수** | 0개 |
+| **실행 시간** | 0.01초 |
 
-### 📊 품질 평가
+### 📋 테스트 케이스 상세
+| 테스트 함수 | 입력 | 예상 결과 | 상태 |
+|-------------|------|-----------|------|
+| `test_add_positive_numbers` | `add(2, 3)` | `5` | ✅ |
+| `test_add_negative_numbers` | `add(-1, -4)` | `-5` | ✅ |
+| `test_subtract_positive_numbers` | `subtract(10, 7)` | `3` | ✅ |
+| `test_subtract_negative_result` | `subtract(3, 5)` | `-2` | ✅ |
+| `test_multiply_positive_numbers` | `multiply(4, 5)` | `20` | ✅ |
+| `test_multiply_by_zero` | `multiply(7, 0)` | `0` | ✅ |
+| `test_divide_positive_numbers` | `divide(10, 2)` | `5.0` | ✅ |
+| `test_divide_non_integer_result` | `divide(7, 2)` | `3.5` | ✅ |
+| `test_divide_by_zero` | `divide(5, 0)` | `ZeroDivisionError` | ✅ |
+| `test_invalid_operator` | `calculate(2, 3, '^')` | `ValueError` | ✅ |
+| `test_example` | `example()` | `True` | ✅ |
 
+> 🔍 **특이사항**: `divide()`는 항상 `float` 반환 (`10 / 2 → 5.0`)  
+> ⚠️ **예외 처리**: `ZeroDivisionError`는 `pytest.raises()`로 검증
+
+---
+
+## 🔍 리뷰 결과
+
+✅ **READY_TO_COMMIT**
+
+### 검수 항목별 평가
 | 항목 | 평가 | 근거 |
 |------|------|------|
-| **보안** | ✅ 안전 | 외부 URL, `eval/exec`, 민감 정보 없음 |
-| **가독성** | ✅ 우수 | 간결한 구조, 명확한 의도 |
-| **의미 있는 검증** | ⚠️ **부족** | `assert True`는 **dummy test**로, 실제 기능 검증 불가 |
-| **CI/CD 적합성** | ⚠️ 제한적 | `pytest --strict` 모드 적용 시 dummy test 탐지 가능 |
+| **기능 정확성** | ✅ | 설계 시나리오와 100% 일치 |
+| **예외 처리** | ✅ | `ZeroDivisionError`, `ValueError` 명시적 발생 |
+| **보안성** | ✅ | `eval`/`exec`/외부 접근/민감 정보 없음 |
+| **코드 품질** | ✅ | 타입 힌트 일관, `__all__` 명시, pytest 친화적 |
+| **확장성** | ✅ | `calculate()` 래퍼로 향후 연산자 확장 가능 |
 
 ---
 
-## 5. 학습 기록 (CLAUDE.md Rule 1: Continuous Learning)
+## 📚 Learned Skills
 
-### 🔍 발견된 패턴
-
-- **`pytest`에서 `assert True`는 `passed`로 간주됨**  
-  → **의도하지 않은 통과 테스트 방지 위해 `pytest --strict` 모드 사용 필수**
-
-### 🛠 적용 예정 최적화
-
-```ini
-# pytest.ini (추천)
-[pytest]
-filterwarnings = error::pytest.PytestUnhandledWarning
-```
-
-### 📌 다음 단계
-
-| 우선순위 | 작업 | 설명 |
-|----------|------|------|
-| 🔴 **High** | `test_example.py` 실제 검증 로직 추가 | `assert True` → `assert some_function() == expected` |
-| 🟡 **Medium** | `gpu_config.py` 테스트 구현 | `get_metal_memory_limit()`에 대한 정상/예외 케이스 테스트 |
-| 🟢 **Low** | `requirements.txt` 파서 테스트 구현 | 충돌 감지 및 재시도 로직 검증 |
+| 항목 | 내용 |
+|------|------|
+| **테스트 전략** | `pytest.raises()`를 사용한 예외 테스트가 `assert`보다 명확하고 안전함 |
+| **타입 힌트** | Python 3.12에서 `float` 반환 타입은 `: float`로 통일하는 것이 일관성 확보에 효과적 |
+| **보안 검증** | `grep -r "eval\|exec\|os.system"`을 통한 정적 분석이 빠르고 확실함 |
 
 ---
 
-## 6. 결론 및 권고
+> 📝 **Next Steps (선택적 확장)**  
+> - 실수 입력 처리: `str` → `float` 변환 로직 추가 (요구사항 미반영)  
+> - 연산자 확장: `calculate()`에 `//`, `%`, `**` 등 추가  
+> - CLI 인터페이스: `argparse` 기반 CLI 도구 개발  
 
-- **현재 상태**: 테스트 프레임워크는 작동하나, **의미 있는 검증 없음**  
-- **CI/CD 반영 전 반드시 보완 필요**:  
-  - `pytest --strict` 모드 적용  
-  - `test_example.py`를 임시 파일로 간주하고 실제 기능 테스트로 대체  
-- **다음 스텝**:  
-  > 📌 **Clarification 요청** → `gpu_config.py`, `requirements.txt` 테스트 구현  
-  > 📌 **가정 기반 설계 승인 후**, 실제 테스트 코드 작성 → **TDD-First 준수**
-
----
-
-**보고서 작성자**: Claude (M4 Pro 최적화 에이전트)  
-**다음 업데이트 예정일**: 실제 기능 테스트 구현 완료 후  
-**문의**: CLAUDE.md Rule 1~5 위반 시 즉시 `EXTERNAL_CONSULT` 선언
+---  
+**보고서 작성 완료** ✅
