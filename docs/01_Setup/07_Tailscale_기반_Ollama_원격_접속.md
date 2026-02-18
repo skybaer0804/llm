@@ -73,6 +73,7 @@ OLLAMA_ORIGINS="*" OLLAMA_HOST=0.0.0.0:11434 ollama serve
 
 - **Cursor** 에디터는 모든 요청을 자사 서버를 거쳐 전달하는 아키텍처 때문에, localhost나 Tailscale IP 같은 로컬/사설 주소를 직접 사용할 수 없습니다.
 - **Cursor에서 로컬 Ollama 사용**을 원하면 [10. Cursor + ngrok 로컬 Ollama 연동 가이드](./10_Cursor_ngrok_로컬_Ollama_연동.md)를 참고하여 **ngrok**으로 HTTPS 터널을 구성하세요.
+- Cursor에서 사용할 때는 **Tailscale Funnel**로 HTTPS 주소를 만드는 방법도 있으며, 회사망 등에서 차단될 때의 대안은 [11. 회사망 로컬 서버 노출 가이드](./11_회사망_로컬_서버_노출_가이드.md)를 참고하세요.
 - 맥북에서 Ollama를 쓰려면 **Antigravity** 또는 **VS Code + Continue**를 설치하고, Tailscale로 확인한 맥미니 주소(`http://100.xx.xx.xx:11434`)만 넣으면 휴대폰처럼 바로 작동합니다. (Cursor 없이 사용 시)
 
 ### 향후 계획 요약
@@ -85,6 +86,7 @@ OLLAMA_ORIGINS="*" OLLAMA_HOST=0.0.0.0:11434 ollama serve
 ## 관련 문서
 
 - [10. Cursor + ngrok 로컬 Ollama 연동 가이드](./10_Cursor_ngrok_로컬_Ollama_연동.md) – Cursor에서 로컬 Ollama 사용 시 ngrok HTTPS 터널 활용
+- [11. 회사망 로컬 서버 노출 가이드](./11_회사망_로컬_서버_노출_가이드.md) – Tailscale Funnel, Cloudflare Tunnel 등 회사망 HTTPS 터널 대안
 - [02. Docker 및 보안 설정 – Tailscale 소개](./02_Docker_및_보안_설정.md)
 - [03. Ollama 설치 및 웹 UI 구성](./03_Ollama_설치_및_웹UI_구성.md)
 - [08. LiteLLM – OpenAI 호환 프록시](./08_LiteLLM_OpenAI_호환_프록시.md) (Antigravity에서 OpenAI 형식 + 검색 도구 사용 시)

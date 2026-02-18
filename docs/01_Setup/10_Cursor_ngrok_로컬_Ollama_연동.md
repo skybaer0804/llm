@@ -82,6 +82,10 @@ ngrok http 11434
 
 - ngrok 유료 플랜 또는 [LiteLLM + Tailscale](./07_Tailscale_기반_Ollama_원격_접속.md) 기반의 **Antigravity/Continue** 사용을 고려하세요.
 
+### 회사망에서 ngrok 또는 100.x 차단 시
+
+- 회사망에서 ngrok 또는 Tailscale `100.x` 대역이 차단되면 [11. 회사망 로컬 서버 노출 가이드](./11_회사망_로컬_서버_노출_가이드.md)의 **Tailscale Funnel**, **Cloudflare Tunnel** 등을 참고하세요.
+
 ---
 
 ## 문제 해결 (Troubleshooting)
@@ -96,5 +100,6 @@ ngrok http 11434
 ## 관련 문서
 
 - [07. Tailscale 기반 Ollama 원격 접속](./07_Tailscale_기반_Ollama_원격_접속.md) – Cursor 대신 Antigravity/Continue + Tailscale 사용 시
+- [11. 회사망 로컬 서버 노출 가이드](./11_회사망_로컬_서버_노출_가이드.md) – 회사망에서 Tailscale Funnel, Cloudflare Tunnel 등 HTTPS 터널 대안
 - [08. LiteLLM – OpenAI 호환 프록시](./08_LiteLLM_OpenAI_호환_프록시.md) – OpenAI 형식 엔드포인트 구성
 - [09. Anti-gravity 및 MCP 연동 가이드](./09_Anti-gravity_및_MCP_연동_가이드.md) – Tailscale 기반 안티그래비티 연동
