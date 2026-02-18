@@ -8,6 +8,7 @@
 import ast
 import os
 import subprocess
+import sys
 import logging
 from pathlib import Path
 from typing import Optional, Dict, Any
@@ -110,10 +111,15 @@ class AgentTools:
             return {"exit_code": -1, "output": f"DOCKER_ERROR: {e}"}
 
     def _run_in_subprocess(self, command: str) -> Dict[str, Any]:
-        """subprocess 폴백 (Docker 없을 때, timeout 5초)"""
+        """subprocess 폴백 (Docker 없을 때, timeout 30초)"""
         try:
+            # venv 내 python -m 으로 실행하여 PATH 문제 방지
+            parts = command.split()
+            if parts[0] in ("pytest", "pylint", "black"):
+                parts = [sys.executable, "-m"] + parts
+
             result = subprocess.run(
-                command.split(),
+                parts,
                 capture_output=True,
                 text=True,
                 timeout=30,

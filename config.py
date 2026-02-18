@@ -22,7 +22,7 @@ SNAPSHOT_DIR = PROJECT_ROOT / "shared"
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 MACBOOK_OLLAMA = os.getenv("MACBOOK_OLLAMA", "http://localhost:11434")
-MACMINI_OLLAMA = os.getenv("MACMINI_OLLAMA", "http://169.254.19.104:11434")
+MACMINI_OLLAMA = os.getenv("MACMINI_OLLAMA", "http://127.0.0.1:11434")
 OLLAMA_API_KEY = "ollama"  # 로컬이므로 임의값
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

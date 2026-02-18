@@ -9,6 +9,7 @@ TDD 자율 주행 루프 오케스트레이션
 """
 
 import logging
+import re
 import autogen
 
 from config import (
@@ -28,6 +29,33 @@ from agents import (
 from tools import AgentTools
 
 logger = logging.getLogger(__name__)
+
+
+def _save_code_blocks(text: str, tools: AgentTools):
+    """Coder 응답에서 파일 경로가 포함된 코드 블록을 추출하여 파일로 저장
+
+    지원 패턴:
+    1. 코드 블록 안 첫 줄: ```python\n# File: path/to/file.py\n내용```
+    2. 코드 블록 바깥 윗줄: # File: path/to/file.py\n```python\n내용```
+    """
+    saved = {}
+    ext_pattern = r"\S+\.(?:py|txt|md|cfg|toml|yaml|yml)"
+
+    # 패턴 1: # File: path 가 코드 블록 밖(바로 윗줄)에 있는 경우
+    pattern1 = rf"#\s*(?:File:\s*)({ext_pattern})\s*\n```(?:python|bash|text)?\s*\n(.*?)```"
+    for filepath, content in re.findall(pattern1, text, re.DOTALL):
+        saved[filepath] = content.strip()
+
+    # 패턴 2: # File: path 가 코드 블록 안 첫 줄에 있는 경우
+    pattern2 = rf"```(?:python|bash|text)?\s*\n#\s*(?:File:\s*)({ext_pattern})\s*\n(.*?)```"
+    for filepath, content in re.findall(pattern2, text, re.DOTALL):
+        if filepath not in saved:
+            saved[filepath] = content.strip()
+
+    for filepath, content in saved.items():
+        if content:
+            result = tools.write_file(filepath, content + "\n")
+            logger.info(f"[SAVE] {result}")
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -85,6 +113,7 @@ def run_sequential(requirement: str, tools: AgentTools) -> dict:
         max_turns=1,
     )
     code_output = _extract_last_message(code_response)
+    _save_code_blocks(code_output, tools)
     logger.info("[STEP 2] 코드 작성 완료")
 
     # ── Step 3-5: TDD 루프 ──
@@ -97,16 +126,22 @@ def run_sequential(requirement: str, tools: AgentTools) -> dict:
             result["test_result"] = test_result
             break
 
+        # exit_code 5 = no tests collected (테스트 파일 없음)
+        if test_result["exit_code"] == 5:
+            logger.warning("[STEP 3] 테스트 파일 없음 (exit code 5)")
+
         logger.info(f"[STEP 3] 테스트 실패 - Coder에게 수정 요청")
         fix_response = human.initiate_chat(
             coder,
             message=(
                 f"테스트가 실패했다. 다음 로그를 분석하여 코드를 수정하라:\n\n"
-                f"```\n{test_result['output'][:2000]}\n```"
+                f"```\n{test_result['output'][:2000]}\n```\n\n"
+                f"중요: 파일 경로를 반드시 '# File: 경로' 형식으로 코드 블록 첫 줄에 명시하라."
             ),
             max_turns=1,
         )
         code_output = _extract_last_message(fix_response)
+        _save_code_blocks(code_output, tools)
     else:
         result["status"] = "TDD_FAILED"
         logger.error(f"[STEP 3] {MAX_TDD_RETRIES}회 시도 후 테스트 실패")
@@ -135,6 +170,7 @@ def run_sequential(requirement: str, tools: AgentTools) -> dict:
                 max_turns=1,
             )
             code_output = _extract_last_message(fix_response)
+            _save_code_blocks(code_output, tools)
 
     # ── Step 7: Git 커밋 ──
     commit_result = tools.git_commit(f"feat: {requirement[:50]}")
