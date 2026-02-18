@@ -36,6 +36,59 @@ PARAMETER temperature 0.2
 # Qwen 2.5(3)는 최대 128k까지 지원하지만, 32k가 성능과 메모리 사이의 가성비가 가장 좋습니다.
 PARAMETER num_ctx 32768
 
+---
+
+## 4. 컨텍스트 크기(num_ctx) 확인 및 고정 가이드
+
+맥미니(56GB/64GB) 환경에서 Ollama의 기본 컨텍스트(2048)는 프로젝트 전체를 파악하기에 너무 작습니다. 32k(32768)로 확장하여 '기억력'을 극대화하는 것이 성능의 핵심입니다.
+
+### 4.1 현재 컨텍스트 크기 확인법 (How to Check)
+
+#### 방법 1: 서버 로그 확인 (가장 확실함)
+맥미니 터미널에서 아래 명령어로 실시간 로그를 확인합니다.
+```bash
+journalctl -u ollama --no-pager | grep num_ctx
+```
+- `llama_new_context_with_model: n_ctx = 32768` 또는 `kv_self.n_ctx = 32768` 문구가 현재 설정값입니다.
+
+#### 방법 2: API를 통한 확인 (외부 노트북에서도 가능)
+노트북 터미널에서 맥미니 IP로 요청을 보냅니다.
+```bash
+curl http://[맥미니IP]:11434/api/show -d '{
+  "name": "qwen3-coder-next:q4_K_M"
+}'
+```
+- 결과값 중 `parameters` 섹션이나 모델 정의 부분에 `num_ctx` 값이 명시되어 있는지 확인하세요. 만약 없다면 기본값인 **2048(2k)**로 동작 중일 가능성이 높습니다.
+
+### 4.2 컨텍스트 크기 고정 방법 (How to Set)
+
+#### 방법 A: Modelfile 수정 (추천)
+맥미니에서 직접 모델 설정을 바꿔서 저장해버리는 방식입니다.
+1. `nano Modelfile` 생성 후 아래 내용 입력:
+   ```dockerfile
+   FROM qwen3-coder-next:q4_K_M
+   PARAMETER num_ctx 32768
+   ```
+2. 모델 업데이트:
+   ```bash
+   ollama create qwen3-high-ctx -f Modelfile
+   ```
+3. 이제 Aider나 Continue에서 `qwen3-high-ctx`를 호출하면 항상 32k로 동작합니다.
+
+#### 방법 B: 환경 변수 주입
+맥미니에서 Ollama 서버를 실행할 때 아예 선언해버리는 방식입니다.
+```bash
+# 맥미니 터미널
+OLLAMA_NUM_CTX=32768 ollama serve
+```
+
+### 4.3 56GB/64GB 메모리 환경의 스위트 스폿 (Sweet Spot)
+
+컨텍스트를 무조건 크게(예: 128k) 잡으면 KV Cache가 차지하는 RAM 비중이 커져서 모델 성능이 저하될 수 있습니다. 
+
+- **32k 설정 시**: 모델(약 48GB) + 컨텍스트(약 4~6GB) ≈ 54GB 내외
+- 이 설정이 맥미니 56GB 가용 메모리 안에서 **스와핑(버벅임) 없이 최상의 지능**을 뽑아낼 수 있는 최적의 지점입니다.
+
 # 기본 원칙 및 비판적 사고 주입
 SYSTEM """
 너는 Python과 Clean Code에 정통한 시니어 개발자다.

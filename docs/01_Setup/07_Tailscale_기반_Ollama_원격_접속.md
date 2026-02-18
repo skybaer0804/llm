@@ -69,12 +69,12 @@ OLLAMA_ORIGINS="*" OLLAMA_HOST=0.0.0.0:11434 ollama serve
 - **Tailscale을 통한 개인 전용 AI 네트워크 구축 완료.** 맥미니의 전기세만 내면 무제한으로 AI를 쓸 수 있습니다.
 - 휴대폰·맥북 등 Tailscale이 켜진 모든 기기에서 동일한 Ollama 서버에 접속 가능합니다.
 
-### Cursor 관련
+### Cursor 관련 (권장: Continue 확장 프로그램 사용)
 
-- **Cursor** 에디터는 모든 요청을 자사 서버를 거쳐 전달하는 아키텍처 때문에, localhost나 Tailscale IP 같은 로컬/사설 주소를 직접 사용할 수 없습니다.
-- **Cursor에서 로컬 Ollama 사용**을 원하면 [10. Cursor + ngrok 로컬 Ollama 연동 가이드](./10_Cursor_ngrok_로컬_Ollama_연동.md)를 참고하여 **ngrok**으로 HTTPS 터널을 구성하세요.
-- Cursor에서 사용할 때는 **Tailscale Funnel**로 HTTPS 주소를 만드는 방법도 있으며, 회사망 등에서 차단될 때의 대안은 [11. 회사망 로컬 서버 노출 가이드](./11_회사망_로컬_서버_노출_가이드.md)를 참고하세요.
-- 맥북에서 Ollama를 쓰려면 **Antigravity** 또는 **VS Code + Continue**를 설치하고, Tailscale로 확인한 맥미니 주소(`http://100.xx.xx.xx:11434`)만 넣으면 휴대폰처럼 바로 작동합니다. (Cursor 없이 사용 시)
+- **Cursor** 에디터의 `Override OpenAI Base URL` 설정은 지연 및 연결 오류 등 '문제가 많으므로' 권장되지 않습니다.
+- Cursor 앱 자체 설정 대신 **Continue** 확장 프로그램을 사용하는 것이 훨씬 안정적이며 강력합니다. 상세 설정은 **[12. Continue 로컬 LLM 최적화 설정](./12_Continue_로컬_LLM_최적화_설정.md)** 가이드를 참고하세요.
+- 만약 반드시 Cursor 앱 설정을 사용해야 한다면 [10. Cursor + ngrok 로컬 Ollama 연동 가이드](./10_Cursor_ngrok_로컬_Ollama_연동.md)를 참고하여 **ngrok**으로 HTTPS 터널을 구성할 수 있으나 권장하지 않습니다.
+- 맥북에서 로컬 LLM을 쓰려면 **Continue** 또는 **Antigravity**를 설치하고, Tailscale로 확인한 맥미니 주소(`http://100.xx.xx.xx:11434`)만 넣으면 바로 작동합니다.
 
 ### 향후 계획 요약
 

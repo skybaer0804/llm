@@ -73,7 +73,7 @@ MCP는 안티그래비티 에이전트가 맥미니의 기능을 '도구'로서 
 | **Tailscale** | 네트워크 브릿지 | 모든 기기를 동일 네트워크로 연결 |
 | **Raycast** | 스크립트 실행 | `run_ai.sh` 스크립트를 단축키로 실행 |
 | **Amphetamine** | 서버 잠자기 방지 | 맥미니가 항상 깨어있도록 관리 |
-| **Cursor / Cline** | 개발 전용 IDE | MCP 및 커스텀 모델 연동. Cursor는 localhost를 지원하지 않으므로 [10. ngrok 연동](./10_Cursor_ngrok_로컬_Ollama_연동.md) 참고 |
+| **Cursor / Continue** | 개발 전용 IDE | Cursor의 직접 연동은 문제가 많으므로, **Continue** 확장 프로그램을 통해 연동하는 것을 권장합니다. [12. Continue 설정](./12_Continue_로컬_LLM_최적화_설정.md) 참고 |
 
 ---
 

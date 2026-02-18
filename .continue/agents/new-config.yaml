@@ -1,0 +1,32 @@
+name: My Local LLM Config
+version: 1.0.0
+schema: v1
+
+# 모델 정의: LiteLLM을 통해 개인 PC 모델에 접근합니다.
+models:
+  # 1. 코드 편집 전용 모델 (tools 없음, 빠른 응답)
+  - name: Qwen-Coder (Edit)
+    provider: openai
+    model: qwen-coder
+    apiBase: https://macmini.tailaab9f8.ts.net/v1
+    apiKey: sk-local-token
+
+  # 2. 검색 및 채팅용 모델 (Serper 검색 도구 포함)
+  - name: Qwen-Search (Chat)
+    provider: openai
+    model: local-search-model
+    apiBase: https://macmini.tailaab9f8.ts.net/v1
+    apiKey: sk-local-token
+
+# 자동 완성(Tab) 설정: 타이핑 중 코드를 제안합니다.
+tabAutocompleteModel:
+  name: Autocomplete
+  provider: openai
+  model: qwen-coder
+  apiBase: https://macmini.tailaab9f8.ts.net/v1
+
+# 기본 컨텍스트 설정: 코드 수정 시 파일 맥락을 더 잘 파악하게 돕습니다.
+contextProviders:
+  - name: code
+  - name: docs
+  - name: diff
