@@ -7,6 +7,7 @@ Thunderbolt 분산 아키텍처:
 """
 
 import os
+import re
 from pathlib import Path
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -83,21 +84,44 @@ ROUTER_API_URL = os.getenv("ROUTER_API", "http://localhost:8000")
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 def load_claude_rules():
-    """CLAUDE.md에서 프로젝트 규칙을 읽어 시스템 프롬프트용 텍스트로 반환"""
+    """CLAUDE.md에서 Global Rules 섹션만 추출하여 경량화된 규칙 반환"""
     claude_md_path = PROJECT_ROOT / "CLAUDE.md"
-    
+
     if not claude_md_path.exists():
-        return "Warning: CLAUDE.md not found. Proceeding with default rules."
-    
+        return ""
+
     try:
         with open(claude_md_path, "r", encoding="utf-8") as f:
             content = f.read()
-            return f"\n=== PROJECT GOVERNANCE (CLAUDE.md) ===\n{content}\n======================================\n"
+
+        # Global Rules 섹션만 추출 (컨텍스트 절약)
+        match = re.search(
+            r"(## 🤖 Global Rules.*?)(?=\n## |\Z)",
+            content,
+            re.DOTALL,
+        )
+        if match:
+            rules_text = match.group(1).strip()
+        else:
+            # 섹션 추출 실패 시 전체 주입하되 길이 제한
+            rules_text = content[:1500]
+
+        return f"\n=== PROJECT RULES ===\n{rules_text}\n=====================\n"
     except Exception as e:
         return f"Error reading CLAUDE.md: {str(e)}"
 
-BASE_INSTRUCTION = """
-당신은 M4 Pro 환경에 최적화된 전문 소프트웨어 엔지니어 에이전트입니다.
-제공된 CLAUDE.md의 규칙을 헌법처럼 따르며, 새로운 최적화나 실수를 발견하면
-반드시 기록하여 '지속적 학습'을 수행하십시오.
+
+BASE_INSTRUCTION = """당신은 M4 Pro macOS 환경에 최적화된 전문 소프트웨어 엔지니어 에이전트입니다.
+
+[환경 정보]
+- OS: macOS (Apple Silicon M4 Pro)
+- Python: 3.12
+- 가상환경: .venv (venv)
+- 작업 디렉토리: dev_repo/ 내에서 파일 생성
+- 테스트 프레임워크: pytest
+
+[핵심 규칙]
+1. TDD-First: 테스트 코드를 먼저 작성하고, 기능 코드를 나중에 작성한다.
+2. YAGNI: 최소한의 코드로 요구사항을 충족시킨다. 불필요한 추상화 금지.
+3. 보안: eval/exec 금지, 외부 URL 접속 금지, 민감 정보 하드코딩 금지.
 """
