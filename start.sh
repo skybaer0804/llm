@@ -37,7 +37,7 @@ if pgrep -x "ollama" > /dev/null 2>&1; then
     log "     Ollama 이미 실행 중"
 else
     log "     Ollama 시작 중..."
-    OLLAMA_HOST="0.0.0.0" ollama serve > "$PROJECT_DIR/ollama.log" 2>&1 &
+    OLLAMA_HOST="0.0.0.0" OLLAMA_NUM_CTX=32768 ollama serve > "$PROJECT_DIR/ollama.log" 2>&1 &
     sleep 3
     if pgrep -x "ollama" > /dev/null 2>&1; then
         log "     Ollama 시작 완료 (PID: $(pgrep -x ollama))"
