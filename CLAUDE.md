@@ -33,6 +33,7 @@
 - **Error Fix (ResolutionImpossible)**: `requirements.txt`의 버전 고정을 풀고 `pip install --upgrade pip` 선행 후 재시도.
 - **Optimization (GPU Acceleration)**: Metal API 호출 시 컨텍스트 윈도우 크기에 따른 레이어 할당량 최적화가 성능의 핵심임.
 - **Sub-agent usage**: 복잡한 라우팅 로직은 `use subagents` 지시어를 활용해 분산 처리하여 메인 컨텍스트를 보호함.
+- **Docs Assistant (Tool Calling)**: 로컬 LLM이 외부 API를 호출하려면 (1) 시스템 프롬프트에 정확한 필드명(`id` NOT `_id`)과 API 스키마를 명시하고 (2) `stream: false`로 설정하고 (3) 별도 러너 스크립트(`docs_assistant.py`)에서 tool call → httpx 실행 → 결과 피드백 루프를 구현해야 한다. config.yaml의 `docs-assistant` 모델 참조.
 
 ---
 *참고: 이 파일은 에이전트에 의해 지속적으로 업데이트됩니다.*
