@@ -1,13 +1,12 @@
 #!/bin/bash
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# LLM 멀티 에이전트 시스템 - 재부팅 후 원클릭 실행
+# LLM MSA System - 원클릭 실행
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 set -e
 
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 LITELLM_DIR="$PROJECT_DIR/litellm"
 VENV_DIR="$PROJECT_DIR/.venv"
-LOG_FILE="$PROJECT_DIR/startup.log"
 
 # 색상 정의
 GREEN='\033[0;32m'
@@ -28,11 +27,11 @@ if [ -f "$ENV_FILE" ]; then
 fi
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo " LLM Agent System Startup"
+echo " LLM MSA System Startup"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-# ── 1. Ollama 서비스 시작 (MacBook) ──
-log "1/7  Ollama 서비스 확인..."
+# ── 1. Ollama 서비스 시작 ──
+log "1/8  Ollama 서비스 확인..."
 if pgrep -x "ollama" > /dev/null 2>&1; then
     log "     Ollama 이미 실행 중"
 else
@@ -47,7 +46,7 @@ else
 fi
 
 # ── 2. Ollama 헬스 체크 ──
-log "2/7  Ollama 헬스 체크..."
+log "2/8  Ollama 헬스 체크..."
 RETRY=0
 MAX_RETRY=10
 until curl -s http://localhost:11434/api/tags > /dev/null 2>&1; do
@@ -60,7 +59,7 @@ done
 log "     Ollama 정상 응답 확인"
 
 # ── 3. 가상환경 활성화 ──
-log "3/7  Python 가상환경 활성화..."
+log "3/8  Python 가상환경 활성화..."
 if [ ! -d "$VENV_DIR" ]; then
     warn "가상환경이 없습니다. 생성 중..."
     python3 -m venv "$VENV_DIR"
@@ -75,7 +74,7 @@ fi
 log "     Python: $(python --version) | venv: $VIRTUAL_ENV"
 
 # ── 4. 맥미니 Ollama 연결 확인 ──
-log "4/7  맥미니 Ollama 연결 확인..."
+log "4/8  맥미니 Ollama 연결 확인..."
 MACMINI_URL="${MACMINI_OLLAMA:-http://127.0.0.1:11434}"
 if curl -s --connect-timeout 3 "$MACMINI_URL/api/tags" > /dev/null 2>&1; then
     log "     맥미니 Ollama 연결 성공 ($MACMINI_URL)"
@@ -84,12 +83,12 @@ else
 fi
 
 # ── 5. dev_repo 디렉토리 확인 ──
-log "5/7  작업 디렉토리 확인..."
+log "5/8  작업 디렉토리 확인..."
 mkdir -p "$PROJECT_DIR/dev_repo"
 log "     dev_repo/ 준비 완료"
 
-# ── 6. LiteLLM 프록시 서버 시작 (백그라운드) ──
-log "6/7  LiteLLM 프록시 서버 시작..."
+# ── 6. LiteLLM 프록시 서버 시작 (내부 전용, :4000) ──
+log "6/8  LiteLLM 프록시 서버 시작..."
 if lsof -i :4000 > /dev/null 2>&1; then
     log "     LiteLLM 이미 실행 중 (port 4000)"
 else
@@ -109,35 +108,52 @@ else
     fi
 fi
 
-# ── 7. Tailscale Funnel (별도 터미널에서 포트 4000 외부 노출) ──
-log "7/7  Tailscale Funnel 시작..."
+# ── 7. LLM Gateway 시작 (:8000) ──
+log "7/8  LLM Gateway 시작..."
+if lsof -i :8000 > /dev/null 2>&1; then
+    log "     Gateway 이미 실행 중 (port 8000)"
+else
+    uvicorn gateway.app:app --host 0.0.0.0 --port 8000 --app-dir "$PROJECT_DIR" > "$PROJECT_DIR/gateway.log" 2>&1 &
+    sleep 2
+    if lsof -i :8000 > /dev/null 2>&1; then
+        log "     Gateway 시작 완료 (http://localhost:8000)"
+    else
+        warn "Gateway 시작 실패. gateway.log를 확인하세요."
+    fi
+fi
+
+# ── 8. Tailscale Funnel (Gateway :8000 외부 노출) ──
+log "8/8  Tailscale Funnel 시작..."
 if ! command -v tailscale > /dev/null 2>&1; then
     warn "tailscale 미설치 - Funnel 건너뜀"
-elif tailscale funnel status 2>/dev/null | grep -q ":4000"; then
-    log "     Tailscale Funnel 이미 활성화 (port 4000)"
+elif tailscale funnel status 2>/dev/null | grep -q ":8000"; then
+    log "     Tailscale Funnel 이미 활성화 (port 8000)"
 else
     osascript -e '
         tell application "Terminal"
-            do script "tailscale funnel 4000"
+            do script "tailscale funnel 8000"
             activate
         end tell
     ' > /dev/null 2>&1
-    log "     Tailscale Funnel 별도 터미널에서 시작됨 (port 4000)"
+    log "     Tailscale Funnel 별도 터미널에서 시작됨 (port 8000)"
 fi
 
 # ── 완료 ──
+TS_HOST=$(tailscale status --json 2>/dev/null | python3 -c 'import sys,json; print(json.load(sys.stdin).get("Self",{}).get("DNSName","macmini").rstrip("."))' 2>/dev/null || echo 'macmini')
+
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo -e " ${GREEN}시스템 준비 완료${NC}"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
-echo " 사용법:"
-echo "   python main.py \"요구사항\" --no-docker"
-echo "   python main.py \"요구사항\" --mode groupchat --no-docker"
+echo " Gateway (단일 진입점):"
+echo "   http://localhost:8000"
+echo "   https://${TS_HOST}:8000  (외부)"
 echo ""
-echo " 라우터 서버 시작:"
-echo "   uvicorn router:app --host 0.0.0.0 --port 8000"
-echo ""
-echo " 외부 접속 (Tailscale Funnel):"
-echo "   https://$(tailscale status --json 2>/dev/null | python3 -c 'import sys,json; print(json.load(sys.stdin).get("Self",{}).get("DNSName","macmini").rstrip("."))' 2>/dev/null || echo 'macmini'):4000"
+echo " API 사용법:"
+echo "   curl http://localhost:8000/health"
+echo "   curl http://localhost:8000/v1/models"
+echo "   curl -X POST http://localhost:8000/v1/tasks \\"
+echo "     -H 'Content-Type: application/json' \\"
+echo "     -d '{\"agent\":\"docs-assistant\",\"message\":\"문서 검색: 테스트\",\"credentials\":{\"email\":\"...\",\"password\":\"...\"}}'"
 echo ""
