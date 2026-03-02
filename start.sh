@@ -5,7 +5,7 @@
 set -e
 
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
-LITELLM_DIR="/Users/nowonjae/projects/litellm"
+LITELLM_DIR="$PROJECT_DIR/litellm"
 VENV_DIR="$PROJECT_DIR/.venv"
 LOG_FILE="$PROJECT_DIR/startup.log"
 
@@ -95,10 +95,8 @@ if lsof -i :4000 > /dev/null 2>&1; then
 else
     if [ -d "$LITELLM_DIR" ]; then
         (
-            cd "$LITELLM_DIR"
-            source .venv/bin/activate
             export SERPER_API_KEY="${SERPER_API_KEY:?SERPER_API_KEY가 .env에 설정되지 않았습니다}"
-            litellm --config config.yaml --port 4000 > "$PROJECT_DIR/litellm.log" 2>&1 &
+            litellm --config "$LITELLM_DIR/config.yaml" --port 4000 > "$PROJECT_DIR/litellm.log" 2>&1 &
         )
         sleep 3
         if lsof -i :4000 > /dev/null 2>&1; then

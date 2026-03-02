@@ -1,0 +1,222 @@
+model_list:
+  # Cursor 코드 편집용 - tools 없이 순수 LLM만 제공
+  - model_name: qwen-coder
+    litellm_params:
+      model: ollama_chat/qwen3-coder-next:q4_K_M
+      api_base: http://localhost:11434
+      stream: true
+
+  # 검색 기능 포함 모델 (채팅/검색용)
+  - model_name: local-search-model
+    litellm_params:
+      model: ollama_chat/qwen3-coder-next:q4_K_M
+      api_base: http://localhost:11434
+      tools:
+        - type: function
+          function:
+            name: "search"
+            description: "인터넷 검색이 필요한 최신 정보나 실시간 데이터를 찾을 때 사용합니다."
+            parameters:
+              type: object
+              properties:
+                query:
+                  type: string
+                  description: "검색어"
+              required: ["query"]
+
+  # Docs Assistant - 로컬 LLM에 docs API 도구를 제공하는 모델
+  - model_name: docs-assistant
+    litellm_params:
+      model: ollama_chat/qwen3-coder-next:q4_K_M
+      api_base: http://localhost:11434
+      stream: false
+      system_message: |
+        너는 문서 관리 어시스턴트다. nodnjs-docs API를 사용하여 문서를 생성, 수정, 검색, 삭제한다.
+
+        ## 중요 규칙
+        - 문서 ID 필드명은 반드시 `id` 이다. `_id`가 아니다.
+        - 모든 ID는 UUID 형식이다 (예: "be2ea89c-8c2a-4f54-8718-0b0f4a887b07")
+        - content 필드에는 마크다운을 사용하라. 특히 테이블은 반드시 마크다운 테이블 문법을 사용하라.
+        - 먼저 docs_login으로 토큰을 획득한 후 다른 API를 호출하라.
+        - API 응답의 id 값을 정확히 사용하라. 추측하지 마라.
+
+        ## API 스키마
+        - Base URL: https://nodnjs-docs.koyeb.app/api
+        - 인증: Bearer 토큰 (docs_login으로 획득)
+
+        ### 엔드포인트
+        | 동작 | 메서드 | 경로 | 요청 본문 |
+        |------|--------|------|-----------|
+        | 로그인 | POST | /auth/login | {email, password} |
+        | 문서 생성 | POST | /docs | {name, type:"FILE", content, visibility:"public"} |
+        | 문서 수정 | PUT | /docs/{id} | {content} 또는 {name} |
+        | 태그 추가 | PUT | /docs/{id}/tags | {node_id: id, tags: ["tag1"]} |
+        | 검색 | GET | /docs/search?q={query} | - |
+        | 태그 검색 | GET | /docs/search/tags?tag={tag} | - |
+        | 문서 조회 | GET | /docs/id/{id} | - |
+        | 문서 삭제 | DELETE | /docs/{id} | - |
+        | 웹훅 생성 | POST | /webhooks | {url, events, description} |
+
+        ### 응답 형식
+        - 로그인: {"token": "JWT..."}
+        - 문서 생성: {"id": "UUID", "name": "...", "type": "FILE", ...}
+        - 검색: [{"id": "UUID", "name": "...", "tags": [...], ...}, ...]
+        - 태그 추가: {"success": true, "tags": ["tag1"]}
+        - 삭제: {"message": "Deleted successfully"}
+      tools:
+        - type: function
+          function:
+            name: docs_login
+            description: "docs API에 로그인하여 JWT 토큰을 획득한다. 다른 모든 API 호출 전에 먼저 실행해야 한다."
+            parameters:
+              type: object
+              properties:
+                email:
+                  type: string
+                  description: "로그인 이메일"
+                password:
+                  type: string
+                  description: "로그인 비밀번호"
+              required: ["email", "password"]
+        - type: function
+          function:
+            name: docs_create
+            description: "새 문서를 생성한다. content에 마크다운을 사용하고, 테이블은 반드시 마크다운 테이블 문법을 사용하라."
+            parameters:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: "JWT 인증 토큰"
+                name:
+                  type: string
+                  description: "문서 이름"
+                content:
+                  type: string
+                  description: "문서 내용 (마크다운)"
+                visibility:
+                  type: string
+                  description: "공개 설정: public, private, subscriber_only"
+                  default: "public"
+              required: ["token", "name", "content"]
+        - type: function
+          function:
+            name: docs_update
+            description: "기존 문서의 내용이나 이름을 수정한다."
+            parameters:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: "JWT 인증 토큰"
+                doc_id:
+                  type: string
+                  description: "수정할 문서의 UUID id"
+                content:
+                  type: string
+                  description: "새 문서 내용 (마크다운)"
+                name:
+                  type: string
+                  description: "새 문서 이름"
+              required: ["token", "doc_id"]
+        - type: function
+          function:
+            name: docs_add_tags
+            description: "문서에 태그를 추가한다."
+            parameters:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: "JWT 인증 토큰"
+                doc_id:
+                  type: string
+                  description: "태그를 추가할 문서의 UUID id"
+                tags:
+                  type: array
+                  items:
+                    type: string
+                  description: "추가할 태그 목록"
+              required: ["token", "doc_id", "tags"]
+        - type: function
+          function:
+            name: docs_search
+            description: "키워드로 문서를 검색한다."
+            parameters:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: "JWT 인증 토큰"
+                query:
+                  type: string
+                  description: "검색 키워드 (최소 2자)"
+              required: ["token", "query"]
+        - type: function
+          function:
+            name: docs_search_by_tag
+            description: "태그로 문서를 검색한다."
+            parameters:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: "JWT 인증 토큰"
+                tag:
+                  type: string
+                  description: "검색할 태그"
+              required: ["token", "tag"]
+        - type: function
+          function:
+            name: docs_get
+            description: "문서 ID로 문서 상세 정보를 조회한다."
+            parameters:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: "JWT 인증 토큰"
+                doc_id:
+                  type: string
+                  description: "조회할 문서의 UUID id"
+              required: ["token", "doc_id"]
+        - type: function
+          function:
+            name: docs_delete
+            description: "문서를 삭제한다. 디렉토리인 경우 하위 문서도 모두 삭제된다."
+            parameters:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: "JWT 인증 토큰"
+                doc_id:
+                  type: string
+                  description: "삭제할 문서의 UUID id"
+              required: ["token", "doc_id"]
+        - type: function
+          function:
+            name: webhook_create
+            description: "웹훅을 생성한다. 문서 이벤트(생성/수정/삭제) 발생 시 지정 URL로 알림을 보낸다."
+            parameters:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: "JWT 인증 토큰"
+                url:
+                  type: string
+                  description: "웹훅 수신 URL"
+                events:
+                  type: array
+                  items:
+                    type: string
+                  description: "이벤트 목록: document.created, document.updated, document.deleted"
+                description:
+                  type: string
+                  description: "웹훅 설명"
+              required: ["token", "url", "events"]
+
+# Serper 연동 설정
+litellm_settings:
+  success_callback: ["serper"]
